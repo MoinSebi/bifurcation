@@ -1,5 +1,5 @@
 
-/// Get chunks
+/// Get chunks of a Vector
 pub fn chunk_inplace<T>(it: Vec<T>, numb: usize) -> Vec<Vec<T>>{
     let mut vec_new: Vec<Vec<T>> = Vec::new();
     for _x in 0..numb{
@@ -18,8 +18,8 @@ pub fn chunk_inplace<T>(it: Vec<T>, numb: usize) -> Vec<Vec<T>>{
 
 }
 
-/// Get all pairs of vector
-pub fn get_all_pairs<T>(vector: Vec<T>) -> Vec<(T,T)>
+/// Get all pairs of a vector
+pub fn get_all_pairs<T>(vector: &Vec<T>) -> Vec<(T,T)>
 where T: Clone{
 
     let mut pairs: Vec<(T, T)> = Vec::new();

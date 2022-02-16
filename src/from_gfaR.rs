@@ -1,6 +1,10 @@
 use gfaR_wrapper::{NGfa, NPath};
 use std::collections::{HashSet, HashMap};
 use std::iter::FromIterator;
+use std::sync::{Arc, Mutex};
+use crate::helper::{chunk_inplace, get_all_pairs};
+use std::thread;
+use crate::bifurcation_analysis;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 
@@ -19,10 +23,43 @@ impl dir_node{
 }
 
 
+pub fn iterate_test(graph: &NGfa, threads: usize) {
+    // Get pairs and
+    let pairs = get_all_pairs(&graph.paths);
+    let chunks = chunk_inplace(pairs, threads);
+
+    // Resultat
+    let mut result = Vec::new();
+    let mut handles = Vec::new();
+    let mut a = Arc::new(Mutex::new(result));
+
+    // Iterate over chunks
+    for chunk in chunks{
+        let j = a.clone();
+        let handle = thread::spawn(move || {
+            for pair in chunk.iter(){
+                eprintln!("Working on this pair: {} {}", pair.0.name, pair.1.name);
+                let h = get_shared_index(&pair.0, &pair.1);
+                let result = bifurcation_analysis(&h);
+                let mut rr = j.lock().unwrap();
+                rr.push(result);
+
+            }
+        });
+        handles.push(handle);
+    }
+
+    for handle in handles {
+        handle.join().unwrap()
+
+    }
+}
 
 
 
-pub fn get_shared_index(path1: &NPath, path2: &NPath){
+
+
+pub fn get_shared_index(path1: &NPath, path2: &NPath) -> Vec<(usize, usize)> {
     let iter: HashSet<dir_node> = HashSet::from_iter(path1.nodes.iter().cloned().zip(path1.dir.iter().cloned()).map(|x| {dir_node::new(x.1, x.0)}));
     let iter2: HashSet<dir_node> = HashSet::from_iter(path2.nodes.iter().cloned().zip(path2.dir.iter().cloned()).map(|x| {dir_node::new(x.1, x.0)}));
 
@@ -64,6 +101,7 @@ pub fn get_shared_index(path1: &NPath, path2: &NPath){
             o.push((k[0], k2[0]));
         }
     }
+    o
 }
 
 
