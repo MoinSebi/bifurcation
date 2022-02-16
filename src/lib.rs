@@ -1,6 +1,9 @@
+mod from_gfaR;
+mod helper;
 
 /// Inplace sorting of a vector which includes a tuple of size two (both usize)
 pub fn sort_tuple_vector(vector: & mut Vec<(usize, usize)>){
+
     vector.sort_by(|a, b| (a.0.cmp(&b.0).then(a.1.cmp(&b.1))));
 }
 
@@ -8,7 +11,6 @@ pub fn sort_tuple_vector(vector: & mut Vec<(usize, usize)>){
 /// Returns a list of tuples which span a bubble
 /// These numbers are index from the second genome
 pub fn bifurcation_analysis(o: & Vec<(usize, usize)>) -> Vec<(usize, usize)>{
-
 
     // Mutating vector of starting point of bubbles
     let mut open: Vec<&(usize, usize)> = Vec::new();
