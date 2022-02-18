@@ -24,7 +24,7 @@ impl DirNode{
 }
 
 /// Wrapper function for graphs and bubble detection
-pub fn iterate_test(graph: &NGfa, threads: usize) -> Vec<((String, String), Vec<(usize, usize)>)>{
+pub fn iterate_test(graph: &NGfa, threads: usize) -> Vec<((String, String),  (HashMap<(usize, usize), Vec<(usize, usize)>>, Option<(usize, usize)>))>{
     // Get pairs and
     let pairs = get_all_pairs(&graph.paths);
     let chunks = chunk_inplace(pairs, threads);
@@ -162,6 +162,5 @@ mod form_gfaR {
 
         graph.from_graph("/home/svorbrugg_local/Rust/data/AAA_AAB.cat.gfa");
         let g = iterate_test(&graph, 1);
-        eprintln!("{:?}", g.len());
     }
 }

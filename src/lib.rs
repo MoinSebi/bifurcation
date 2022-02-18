@@ -3,6 +3,9 @@ mod helper;
 #[macro_use]
 extern crate log;
 
+use std::cmp::max;
+use std::collections::HashMap;
+
 
 /// Inplace sorting of a vector which includes a tuple of size two (both usize)
 pub fn sort_tuple_vector(vector: & mut Vec<(usize, usize)>){
@@ -13,9 +16,10 @@ pub fn sort_tuple_vector(vector: & mut Vec<(usize, usize)>){
 /// Detect bubbles
 /// Returns a list of tuples which span a bubble
 /// These numbers are index from the second genome
-pub fn bifurcation_analysis(o: & Vec<(usize, usize)>) -> Vec<[usize;4]> {
+pub fn bifurcation_analysis(o: & Vec<(usize, usize)>) -> ( HashMap<(usize, usize), Vec<(usize, usize)>>, Option<(usize, usize)>) {
     info!("Running Bifuration analysis");
 
+    let mut bubble2: HashMap<(usize, usize), Vec<(usize, usize)>> = HashMap::new();
     // Mutating vector of starting point of bubbles
     let mut open: Vec<&(usize, usize)> = Vec::new();
 
@@ -37,6 +41,12 @@ pub fn bifurcation_analysis(o: & Vec<(usize, usize)>) -> Vec<[usize;4]> {
                 trigger = false;
                 continue;
             } else if (x.0 > x1.0) & (x.1 > x1.1){
+                if bubble2.contains_key(x1){
+                    bubble2.get_mut(x1).unwrap().push(x.clone())
+                } else {
+                    let g = vec![x.clone()];
+                    bubble2.insert(x1.clone().clone(), vec![x.clone()]);
+                }
                 bubble.push([x1.0, x1.1,x.0, x.1]);
                 remove.push(i);
 
@@ -45,6 +55,8 @@ pub fn bifurcation_analysis(o: & Vec<(usize, usize)>) -> Vec<[usize;4]> {
 
 
         }
+
+
         for (index, x) in remove.iter().enumerate(){
             open.remove(x-index);
         }
@@ -53,7 +65,17 @@ pub fn bifurcation_analysis(o: & Vec<(usize, usize)>) -> Vec<[usize;4]> {
         }
 
     }
-    bubble
+    eprintln!("{:?}", bubble2);
+    eprintln!("keys {}", bubble2.keys().len());
+    // let mut j: Vec<(usize, usize)> = bubble2.keys().into_iter().cloned().collect();
+    // eprintln!("{}", j.len());
+    // sort_tuple_vector(& mut j);
+    // eprintln!("{:?}", j[0]);
+    let mm = bubble2.keys().into_iter().min().cloned();
+
+
+
+    (bubble2, mm)
 }
 
 
