@@ -13,7 +13,7 @@ pub fn sort_tuple_vector(vector: & mut Vec<(usize, usize)>){
 /// Detect bubbles
 /// Returns a list of tuples which span a bubble
 /// These numbers are index from the second genome
-pub fn bifurcation_analysis(o: & Vec<(usize, usize)>) -> Vec<(usize, usize)>{
+pub fn bifurcation_analysis(o: & Vec<(usize, usize)>) -> Vec<[usize;4]> {
     info!("Running Bifuration analysis");
 
     // Mutating vector of starting point of bubbles
@@ -37,7 +37,7 @@ pub fn bifurcation_analysis(o: & Vec<(usize, usize)>) -> Vec<(usize, usize)>{
                 trigger = false;
                 continue;
             } else if (x.0 > x1.0) & (x.1 > x1.1){
-                bubble.push((x1.1, x.1));
+                bubble.push([x1.0, x1.1,x.0, x.1]);
                 remove.push(i);
 
 
