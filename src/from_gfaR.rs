@@ -24,7 +24,7 @@ impl DirNode{
 }
 
 /// Wrapper function for graphs and bubble detection
-pub fn iterate_test(graph: &NGfa, threads: usize) -> Vec<(usize, usize)>{
+pub fn iterate_test(graph: &NGfa, threads: usize) -> Vec<((String, String), Vec<(usize, usize)>)>{
     // Get pairs and
     let pairs = get_all_pairs(&graph.paths);
     let chunks = chunk_inplace(pairs, threads);
@@ -42,7 +42,7 @@ pub fn iterate_test(graph: &NGfa, threads: usize) -> Vec<(usize, usize)>{
                 let h = get_shared_index(&pair.0, &pair.1);
                 let result = bifurcation_analysis(&h);
                 let mut rr = j.lock().unwrap();
-                rr.push(result);
+                rr.push(((pair.0.name.clone(), pair.1.name.clone()), result));
 
             }
         });
@@ -54,12 +54,10 @@ pub fn iterate_test(graph: &NGfa, threads: usize) -> Vec<(usize, usize)>{
 
     }
 
-    let mut result_final: Vec<(usize, usize)> = Vec::new();
+    let mut result_final = Vec::new();
     let ro = a.lock().unwrap();
     for x in ro.iter(){
-        for y in x.iter(){
-            result_final.push(y.clone());
-        }
+        result_final.push(x.clone());
     }
     return result_final
 }
