@@ -5,7 +5,7 @@ use std::sync::{Arc, Mutex};
 use crate::helper::{chunk_inplace, get_all_pairs};
 use std::thread;
 use crate::bifurcation_analysis;
-use std::panic::resume_unwind;
+#[macro_use]
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 
@@ -23,7 +23,7 @@ impl DirNode{
     }
 }
 
-
+/// Wrapper function for graphs and bubble detection
 pub fn iterate_test(graph: &NGfa, threads: usize) -> Vec<(usize, usize)>{
     // Get pairs and
     let pairs = get_all_pairs(&graph.paths);
@@ -64,16 +64,19 @@ pub fn iterate_test(graph: &NGfa, threads: usize) -> Vec<(usize, usize)>{
     return result_final
 }
 
+/// Convert Path to hashset of directed nodes
 pub fn path2hashset_dirnode(path: &NPath) -> HashSet<DirNode>{
     let hs_dirnode: HashSet<DirNode> = HashSet::from_iter(path.nodes.iter().cloned().zip(path.dir.iter().cloned()).map(|x| {DirNode::new(x.1, x.0)}));
     return hs_dirnode
 }
 
+/// Convert Path to vector of directed nodes
 pub fn path2vec_dirnode(path: &NPath) -> Vec<DirNode>{
     let iter1: Vec<DirNode> = Vec::from_iter(path.nodes.iter().cloned().zip(path.dir.iter().cloned()).map(|x| {DirNode::new(x.1, x.0)}));
     iter1
 }
 
+/// Convert vector to HashMap(node -> [index, index])
 pub fn vec2hashmap(vec: &Vec<DirNode>, intersection: &HashSet<DirNode>) -> HashMap<DirNode, Vec<usize>>{
     let mut node2pos: HashMap<DirNode, Vec<usize>> = HashMap::new();
     for (index, dir_node) in vec.iter().enumerate(){
@@ -90,7 +93,7 @@ pub fn vec2hashmap(vec: &Vec<DirNode>, intersection: &HashSet<DirNode>) -> HashM
 
 
 
-
+/// Get the shared index of two path
 pub fn get_shared_index(path1: &NPath, path2: &NPath) -> Vec<(usize, usize)> {
     let iter1 = path2hashset_dirnode(path1);
     let iter2 = path2hashset_dirnode(path2);
@@ -118,15 +121,18 @@ pub fn get_shared_index(path1: &NPath, path2: &NPath) -> Vec<(usize, usize)> {
 }
 
 
-///
-pub fn all_combinations(a: & Vec<usize>, b: & Vec<usize>) -> Vec<(usize,usize)> {
-    let mut p = Vec::new();
-    for x in a.iter(){
-        for y in b.iter(){
-            p.push((x.clone(),y.clone()))
+/// All combinations of two vectors
+pub fn all_combinations<T>(a: & Vec<T>, b: & Vec<T>) -> Vec<(T,T)>
+    where T: Clone{
+    {
+        let mut p = Vec::new();
+        for x in a.iter(){
+            for y in b.iter(){
+                p.push((x.clone(),y.clone()))
+            }
         }
+        p
     }
-    p
 }
 
 
@@ -135,9 +141,16 @@ mod form_gfaR {
     use crate::{sort_tuple_vector, bifurcation_analysis};
     use crate::from_gfaR::{all_combinations, get_shared_index, iterate_test};
     use gfaR_wrapper::NGfa;
+    #[macro_use]
+
+
+    fn init() {
+        let _ = env_logger::builder().is_test(true).try_init();
+    }
 
     #[test]
     fn test_combinations() {
+        info!("Testing combinations");
         let vec = vec![1,2,3];
         let vec2 = vec![30,40];
         let j = all_combinations(&vec, &vec2);
@@ -146,6 +159,7 @@ mod form_gfaR {
 
     #[test]
     fn shared_index(){
+        info!("Testing shared_index function");
         let mut graph: NGfa = NGfa::new();
 
         graph.from_graph("/home/svorbrugg_local/Rust/data/AAA_AAB.cat.gfa");
