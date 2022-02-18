@@ -5,15 +5,16 @@ use std::sync::{Arc, Mutex};
 use crate::helper::{chunk_inplace, get_all_pairs};
 use std::thread;
 use crate::bifurcation_analysis;
+use std::panic::resume_unwind;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 
-pub struct dir_node{
+pub struct DirNode{
     pub dir: bool,
     pub id: u32,
 }
 
-impl dir_node{
+impl DirNode{
     pub fn new(dir: bool, id: u32)-> Self{
         Self{
             dir: dir,
@@ -23,7 +24,7 @@ impl dir_node{
 }
 
 
-pub fn iterate_test(graph: &NGfa, threads: usize) {
+pub fn iterate_test(graph: &NGfa, threads: usize) -> Vec<(usize, usize)>{
     // Get pairs and
     let pairs = get_all_pairs(&graph.paths);
     let chunks = chunk_inplace(pairs, threads);
@@ -38,7 +39,6 @@ pub fn iterate_test(graph: &NGfa, threads: usize) {
         let j = a.clone();
         let handle = thread::spawn(move || {
             for pair in chunk.iter(){
-                eprintln!("Working on this pair: {} {}", pair.0.name, pair.1.name);
                 let h = get_shared_index(&pair.0, &pair.1);
                 let result = bifurcation_analysis(&h);
                 let mut rr = j.lock().unwrap();
@@ -53,43 +53,56 @@ pub fn iterate_test(graph: &NGfa, threads: usize) {
         handle.join().unwrap()
 
     }
+
+    let mut result_final: Vec<(usize, usize)> = Vec::new();
+    let ro = a.lock().unwrap();
+    for x in ro.iter(){
+        for y in x.iter(){
+            result_final.push(y.clone());
+        }
+    }
+    return result_final
+}
+
+pub fn path2hashset_dirnode(path: &NPath) -> HashSet<DirNode>{
+    let hs_dirnode: HashSet<DirNode> = HashSet::from_iter(path.nodes.iter().cloned().zip(path.dir.iter().cloned()).map(|x| {DirNode::new(x.1, x.0)}));
+    return hs_dirnode
+}
+
+pub fn path2vec_dirnode(path: &NPath) -> Vec<DirNode>{
+    let iter1: Vec<DirNode> = Vec::from_iter(path.nodes.iter().cloned().zip(path.dir.iter().cloned()).map(|x| {DirNode::new(x.1, x.0)}));
+    iter1
+}
+
+pub fn vec2hashmap(vec: &Vec<DirNode>, intersection: &HashSet<DirNode>) -> HashMap<DirNode, Vec<usize>>{
+    let mut node2pos: HashMap<DirNode, Vec<usize>> = HashMap::new();
+    for (index, dir_node) in vec.iter().enumerate(){
+        if intersection.contains(dir_node){
+            if node2pos.contains_key(&dir_node){
+                node2pos.get_mut(&dir_node).unwrap().push(index);
+            } else {
+                node2pos.insert(dir_node.clone(), vec![index.clone()]);
+            }
+        }
+    }
+    node2pos
 }
 
 
 
 
-
 pub fn get_shared_index(path1: &NPath, path2: &NPath) -> Vec<(usize, usize)> {
-    let iter: HashSet<dir_node> = HashSet::from_iter(path1.nodes.iter().cloned().zip(path1.dir.iter().cloned()).map(|x| {dir_node::new(x.1, x.0)}));
-    let iter2: HashSet<dir_node> = HashSet::from_iter(path2.nodes.iter().cloned().zip(path2.dir.iter().cloned()).map(|x| {dir_node::new(x.1, x.0)}));
+    let iter1 = path2hashset_dirnode(path1);
+    let iter2 = path2hashset_dirnode(path2);
 
-    let g: HashSet<dir_node> = iter.intersection(&iter2).cloned().collect();
+    let g: HashSet<DirNode> = iter1.intersection(&iter2).cloned().collect();
 
 
-    let iterr1: Vec<dir_node> = Vec::from_iter(path1.nodes.iter().cloned().zip(path1.dir.iter().cloned()).map(|x| {dir_node::new(x.1, x.0)}));
-    let iterr2: Vec<dir_node> = Vec::from_iter(path1.nodes.iter().cloned().zip(path1.dir.iter().cloned()).map(|x| {dir_node::new(x.1, x.0)}));
+    let iterr1 = path2vec_dirnode(path1);
+    let iterr2 = path2vec_dirnode(path2);
 
-    let mut node2pos: HashMap<dir_node, Vec<usize>> = HashMap::new();
-    for (index, x) in iterr1.iter().enumerate(){
-        if g.contains(x){
-            if node2pos.contains_key(&x){
-                node2pos.get_mut(&x).unwrap().push(index);
-            } else {
-                node2pos.insert(x.clone() ,vec![index.clone()]);
-            }
-        }
-    }
-    let mut node2pos2: HashMap<dir_node, Vec<usize>> = HashMap::new();
-
-    for (index, x) in iterr2.iter().enumerate(){
-        if g.contains(x){
-            if node2pos.contains_key(&x){
-                node2pos.get_mut(&x).unwrap().push(index);
-            } else {
-                node2pos.insert(x.clone() ,vec![index.clone()]);
-            }
-        }
-    }
+    let mut node2pos: HashMap<DirNode, Vec<usize>> = vec2hashmap(&iterr1, &g);
+    let mut node2pos2: HashMap<DirNode, Vec<usize>> = vec2hashmap(&iterr2, &g);
 
     let mut o = Vec::new();
     for x in g.iter(){
@@ -120,13 +133,13 @@ pub fn all_combinations(a: & Vec<usize>, b: & Vec<usize>) -> Vec<(usize,usize)> 
 #[cfg(test)]
 mod form_gfaR {
     use crate::{sort_tuple_vector, bifurcation_analysis};
-    use crate::from_gfaR::{all_combinations, get_shared_index};
+    use crate::from_gfaR::{all_combinations, get_shared_index, iterate_test};
     use gfaR_wrapper::NGfa;
 
     #[test]
     fn test_combinations() {
-        let mut vec = vec![1,2,3];
-        let mut vec2 = vec![30,40];
+        let vec = vec![1,2,3];
+        let vec2 = vec![30,40];
         let j = all_combinations(&vec, &vec2);
         assert_eq!(vec![(1,30), (1,40), (2,30), (2,40), (3,30), (3,40)], j);
     }
@@ -135,7 +148,8 @@ mod form_gfaR {
     fn shared_index(){
         let mut graph: NGfa = NGfa::new();
 
-        graph.from_graph("test.gfa");
-
+        graph.from_graph("/home/svorbrugg_local/Rust/data/AAA_AAB.cat.gfa");
+        let g = iterate_test(&graph, 1);
+        eprintln!("{:?}", g.len());
     }
 }
