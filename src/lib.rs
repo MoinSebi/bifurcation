@@ -1,5 +1,5 @@
-mod from_gfaR;
-mod helper;
+pub mod from_gfaR;
+pub mod helper;
 #[macro_use]
 extern crate log;
 
