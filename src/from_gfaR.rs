@@ -57,7 +57,9 @@ pub fn iterate_test(graph: &NGfa, threads: usize) -> Vec<((String, String),  (Ha
     let mut result_final = Vec::new();
     let ro = a.lock().unwrap();
     for x in ro.iter(){
-        result_final.push(x.clone());
+        if x.1.1.is_some(){
+            result_final.push(x.clone());
+        }
     }
     return result_final
 }

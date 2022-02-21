@@ -17,7 +17,7 @@ pub fn sort_tuple_vector(vector: & mut Vec<(usize, usize)>){
 /// Returns a list of tuples which span a bubble
 /// These numbers are index from the second genome
 pub fn bifurcation_analysis(o: & Vec<(usize, usize)>) -> ( HashMap<(usize, usize), Vec<(usize, usize)>>, Option<(usize, usize)>) {
-    info!("Running Bifuration analysis");
+    info!("Running bifuration analysis");
 
     let mut bubble2: HashMap<(usize, usize), Vec<(usize, usize)>> = HashMap::new();
     // Mutating vector of starting point of bubbles
@@ -65,12 +65,6 @@ pub fn bifurcation_analysis(o: & Vec<(usize, usize)>) -> ( HashMap<(usize, usize
         }
 
     }
-    eprintln!("{:?}", bubble2);
-    eprintln!("keys {}", bubble2.keys().len());
-    // let mut j: Vec<(usize, usize)> = bubble2.keys().into_iter().cloned().collect();
-    // eprintln!("{}", j.len());
-    // sort_tuple_vector(& mut j);
-    // eprintln!("{:?}", j[0]);
     let mm = bubble2.keys().into_iter().min().cloned();
 
 
