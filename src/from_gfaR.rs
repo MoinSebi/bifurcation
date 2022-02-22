@@ -4,11 +4,11 @@ use std::iter::FromIterator;
 use std::sync::{Arc, Mutex};
 use crate::helper::{chunk_inplace, get_all_pairs};
 use std::thread;
-use crate::bifurcation_analysis;
-#[macro_use]
+use log::info;
+use crate::{bifurcation_analysis, sort_tuple_vector};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
-
+/// Directed nodes
 pub struct DirNode{
     pub dir: bool,
     pub id: u32,
@@ -30,16 +30,17 @@ pub fn iterate_test(graph: &NGfa, threads: usize) -> Vec<((String, String),  (Ha
     let chunks = chunk_inplace(pairs, threads);
 
     // Resultat
-    let mut result = Vec::new();
+    let result = Vec::new();
     let mut handles = Vec::new();
-    let mut a = Arc::new(Mutex::new(result));
+    let result_arc = Arc::new(Mutex::new(result));
 
     // Iterate over chunks
     for chunk in chunks{
-        let j = a.clone();
+        let j = result_arc.clone();
         let handle = thread::spawn(move || {
             for pair in chunk.iter(){
-                let h = get_shared_index(&pair.0, &pair.1);
+                let mut h = get_shared_index(&pair.0, &pair.1, true);
+
                 let result = bifurcation_analysis(&h);
                 let mut rr = j.lock().unwrap();
                 rr.push(((pair.0.name.clone(), pair.1.name.clone()), result));
@@ -55,7 +56,7 @@ pub fn iterate_test(graph: &NGfa, threads: usize) -> Vec<((String, String),  (Ha
     }
 
     let mut result_final = Vec::new();
-    let ro = a.lock().unwrap();
+    let ro = result_arc.lock().unwrap();
     for x in ro.iter(){
         if x.1.1.is_some(){
             result_final.push(x.clone());
@@ -94,7 +95,7 @@ pub fn vec2hashmap(vec: &Vec<DirNode>, intersection: &HashSet<DirNode>) -> HashM
 
 
 /// Get the shared index of two path
-pub fn get_shared_index(path1: &NPath, path2: &NPath) -> Vec<(usize, usize)> {
+pub fn get_shared_index(path1: &NPath, path2: &NPath, sort: bool) -> Vec<(usize, usize)> {
     let iter1 = path2hashset_dirnode(path1);
     let iter2 = path2hashset_dirnode(path2);
 
@@ -104,18 +105,21 @@ pub fn get_shared_index(path1: &NPath, path2: &NPath) -> Vec<(usize, usize)> {
     let iterr1 = path2vec_dirnode(path1);
     let iterr2 = path2vec_dirnode(path2);
 
-    let mut node2pos: HashMap<DirNode, Vec<usize>> = vec2hashmap(&iterr1, &g);
-    let mut node2pos2: HashMap<DirNode, Vec<usize>> = vec2hashmap(&iterr2, &g);
+    let node2pos: HashMap<DirNode, Vec<usize>> = vec2hashmap(&iterr1, &g);
+    let node2pos2: HashMap<DirNode, Vec<usize>> = vec2hashmap(&iterr2, &g);
 
     let mut o = Vec::new();
     for x in g.iter(){
         let k = node2pos.get(x).unwrap().clone();
-        let k2 = node2pos2.get_mut(x).unwrap().clone();
+        let k2 = node2pos2.get(x).unwrap().clone();
         if (k.len() > 1) | (k2.len() > 1){
             o.extend(all_combinations(&k, &k2))
         } else {
             o.push((k[0], k2[0]));
         }
+    }
+    if sort{
+        sort_tuple_vector(&mut o)
     }
     o
 }
@@ -138,11 +142,10 @@ pub fn all_combinations<T>(a: & Vec<T>, b: & Vec<T>) -> Vec<(T,T)>
 
 #[cfg(test)]
 mod form_gfaR {
-    use crate::{sort_tuple_vector, bifurcation_analysis};
-    use crate::from_gfaR::{all_combinations, get_shared_index, iterate_test};
+    // cargo test -- --nocapture --test-threads=1
+    use crate::from_gfaR::{all_combinations, iterate_test};
     use gfaR_wrapper::NGfa;
-    #[macro_use]
-
+    use log::info;
 
     fn init() {
         let _ = env_logger::builder().is_test(true).try_init();
@@ -150,6 +153,7 @@ mod form_gfaR {
 
     #[test]
     fn test_combinations() {
+        init();
         info!("Testing combinations");
         let vec = vec![1,2,3];
         let vec2 = vec![30,40];
@@ -162,7 +166,13 @@ mod form_gfaR {
         info!("Testing shared_index function");
         let mut graph: NGfa = NGfa::new();
 
-        graph.from_graph("/home/svorbrugg_local/Rust/data/AAA_AAB.cat.gfa");
+        graph.from_graph("/home/svorbrugg_local/Rust/gSV/example_data/testGraph.gfa");
         let g = iterate_test(&graph, 1);
+        for x in g.iter(){
+            if (x.0.0 == "a_Chr1".to_owned()) & (x.0.1 == "b_Chr".to_owned()){
+                assert_eq!(x.1.0.contains_key(&(2,2)), true);
+
+            }
+        }
     }
 }

@@ -1,10 +1,8 @@
 pub mod from_gfaR;
 pub mod helper;
-#[macro_use]
 extern crate log;
-
-use std::cmp::max;
 use std::collections::HashMap;
+use log::info;
 
 
 /// Inplace sorting of a vector which includes a tuple of size two (both usize)
@@ -23,31 +21,32 @@ pub fn bifurcation_analysis(o: & Vec<(usize, usize)>) -> ( HashMap<(usize, usize
     // Mutating vector of starting point of bubbles
     let mut open: Vec<&(usize, usize)> = Vec::new();
 
-    // BUbbles are saved vec((start, end)): Index of second genome
+    // Bubbles -> dict (from -> Vec[to])
     let mut bubble = Vec::new();
 
 
     // TODO
     // Only close bubble if both is bigger
-    for x in o.iter(){
+    for shared_index in o.iter(){
         let mut remove = Vec::new();
+        // trigger - do not update cycles
         let mut trigger = true;
-        for (i, x1) in open.iter().enumerate(){
-            // If the next entry is just increasing by 1 in both cases --> Remove
-            if &(x1.0+1, x1.1+1) == x {
+        for (i, open_index) in open.iter().enumerate(){
+            // If the next entry is just increasing by 1 in both cases --> remove and update new entry
+            if &(open_index.0+1, open_index.1+1) == shared_index {
                 remove.push(i);
-                // If there is difference
-            } else if (x1.1 == x.1) | (x1.0 == x.0){
+                // If one index is same
+            } else if (open_index.1 == shared_index.1) | (open_index.0 == shared_index.0){
                 trigger = false;
                 continue;
-            } else if (x.0 > x1.0) & (x.1 > x1.1){
-                if bubble2.contains_key(x1){
-                    bubble2.get_mut(x1).unwrap().push(x.clone())
+                // If both things are bigger -> add bubble
+            } else if (shared_index.0 > open_index.0) & (shared_index.1 > open_index.1){
+                if bubble2.contains_key(open_index){
+                    bubble2.get_mut(open_index).unwrap().push(shared_index.clone())
                 } else {
-                    let g = vec![x.clone()];
-                    bubble2.insert(x1.clone().clone(), vec![x.clone()]);
+                    bubble2.insert(open_index.clone().clone(), vec![shared_index.clone()]);
                 }
-                bubble.push([x1.0, x1.1,x.0, x.1]);
+                bubble.push([open_index.0, open_index.1, shared_index.0, shared_index.1]);
                 remove.push(i);
 
 
@@ -61,7 +60,7 @@ pub fn bifurcation_analysis(o: & Vec<(usize, usize)>) -> ( HashMap<(usize, usize
             open.remove(x-index);
         }
         if trigger{
-           open.push(&x);
+           open.push(&shared_index);
         }
 
     }
@@ -77,6 +76,7 @@ pub fn bifurcation_analysis(o: & Vec<(usize, usize)>) -> ( HashMap<(usize, usize
 
 #[cfg(test)]
 mod tests {
+    use log::info;
     use crate::{sort_tuple_vector, bifurcation_analysis};
 
     fn init() {
@@ -114,6 +114,16 @@ mod tests {
         let mut vec = vec![(1, 1), (3, 3), (4, 3), (5, 3), (6,4)];
         sort_tuple_vector(&mut vec);
         bifurcation_analysis(&vec);
+
+    }
+
+
+    #[test]
+    fn run_all(){
+        let mut vec = vec![(1, 1), (2,2), (3,3), (4,5), (5,6)];
+        sort_tuple_vector(&mut vec);
+        let g = bifurcation_analysis(&vec);
+        eprintln!("{:?}", g);
 
     }
 
