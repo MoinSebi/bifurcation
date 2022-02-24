@@ -2,12 +2,12 @@ pub mod from_gfaR;
 pub mod helper;
 extern crate log;
 use std::collections::HashMap;
-use log::info;
+use log::{debug, info};
 
 
 /// Inplace sorting of a vector which includes a tuple of size two (both usize)
 pub fn sort_tuple_vector(vector: & mut Vec<(usize, usize)>){
-    info!("Sort the tuple");
+    debug!("Sort the tuple");
     vector.sort_by(|a, b| (a.0.cmp(&b.0).then(a.1.cmp(&b.1))));
 }
 
@@ -15,7 +15,7 @@ pub fn sort_tuple_vector(vector: & mut Vec<(usize, usize)>){
 /// Returns a list of tuples which span a bubble
 /// These numbers are index from the second genome
 pub fn bifurcation_analysis(o: & Vec<(usize, usize)>) -> ( HashMap<(usize, usize), Vec<(usize, usize)>>, Option<(usize, usize)>) {
-    info!("Running bifuration analysis");
+    debug!("Running bifuration analysis");
 
     let mut bubble2: HashMap<(usize, usize), Vec<(usize, usize)>> = HashMap::new();
     // Mutating vector of starting point of bubbles

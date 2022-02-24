@@ -4,7 +4,7 @@ use std::iter::FromIterator;
 use std::sync::{Arc, Mutex};
 use crate::helper::{chunk_inplace, get_all_pairs};
 use std::thread;
-use log::info;
+use log::{debug, info};
 use crate::{bifurcation_analysis, sort_tuple_vector};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
@@ -27,6 +27,7 @@ impl DirNode{
 pub fn iterate_test(graph: &NGfa, threads: usize) -> Vec<((String, String),  (HashMap<(usize, usize), Vec<(usize, usize)>>, Option<(usize, usize)>))>{
     // Get pairs and
     let pairs = get_all_pairs(&graph.paths);
+    info!("Number of pairs: {}", pairs.len());
     let chunks = chunk_inplace(pairs, threads);
 
     // Resultat
@@ -39,8 +40,9 @@ pub fn iterate_test(graph: &NGfa, threads: usize) -> Vec<((String, String),  (Ha
         let j = result_arc.clone();
         let handle = thread::spawn(move || {
             for pair in chunk.iter(){
-                let mut h = get_shared_index(&pair.0, &pair.1, true);
+                debug!("Pair: {} {}", pair.0.name, pair.1.name);
 
+                let mut h = get_shared_index(&pair.0, &pair.1, true);
                 let result = bifurcation_analysis(&h);
                 let mut rr = j.lock().unwrap();
                 rr.push(((pair.0.name.clone(), pair.1.name.clone()), result));
@@ -167,6 +169,7 @@ mod form_gfaR {
         let mut graph: NGfa = NGfa::new();
 
         graph.from_graph("/home/svorbrugg_local/Rust/gSV/example_data/testGraph.gfa");
+        graph.from_graph("/home/svorbrugg_local/Rust/data/chr1.wfmash.n20.a90.s10000.p1,19,39,3,81,1.seqwish.sort.smooth.sort.noC.gfa"); 
         let g = iterate_test(&graph, 1);
         for x in g.iter(){
             if (x.0.0 == "a_Chr1".to_owned()) & (x.0.1 == "b_Chr".to_owned()){
