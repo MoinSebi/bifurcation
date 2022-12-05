@@ -120,7 +120,7 @@ mod tests {
 
     #[test]
     fn run_all(){
-        let mut vec = vec![(1, 1), (2,2), (3,3), (4,5), (5,6)];
+        let mut vec = vec![(1, 1), (2,3), (3,2), (4,4)];
         sort_tuple_vector(&mut vec);
         let g = bifurcation_analysis(&vec);
         eprintln!("{:?}", g);

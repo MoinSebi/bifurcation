@@ -163,7 +163,7 @@ mod form_gfaR {
         assert_eq!(vec![(1,30), (1,40), (2,30), (2,40), (3,30), (3,40)], j);
     }
 
-    #[test]
+
     fn shared_index(){
         info!("Testing shared_index function");
         let mut graph: NGfa = NGfa::new();
