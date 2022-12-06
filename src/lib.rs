@@ -5,7 +5,8 @@ use std::collections::HashMap;
 use log::{debug, info};
 
 
-/// Inplace sorting of a vector which includes a tuple of size two (both usize)
+/// **Inplace sorting of a vector Vec<(a,b)>**
+/// By a then by b
 pub fn sort_tuple_vector(vector: & mut Vec<(usize, usize)>){
     debug!("Sort the tuple");
     vector.sort_by(|a, b| (a.0.cmp(&b.0).then(a.1.cmp(&b.1))));
@@ -55,10 +56,11 @@ pub fn bifurcation_analysis(o: & Vec<(usize, usize)>) -> ( HashMap<(usize, usize
 
         }
 
-
+        // Remove all open bubbles
         for (index, x) in remove.iter().enumerate(){
             open.remove(x-index);
         }
+        // This is only relevant for the first entry
         if trigger{
            open.push(&shared_index);
         }

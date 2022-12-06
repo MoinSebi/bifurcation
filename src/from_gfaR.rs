@@ -8,13 +8,18 @@ use log::{debug, info};
 use crate::{bifurcation_analysis, sort_tuple_vector};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
-/// Directed nodes
+
+
+/// **Directed nodes**
+/// Holds identifier and direction
+/// This is 2 bytes
 pub struct DirNode{
     pub dir: bool,
     pub id: u32,
 }
 
 impl DirNode{
+    /// Constructor
     pub fn new(dir: bool, id: u32)-> Self{
         Self{
             dir: dir,
@@ -23,17 +28,25 @@ impl DirNode{
     }
 }
 
-/// Wrapper function for graphs and bubble detection
+/// **Wrapper function for genome graphs**
+///
+/// TODO:
+/// - Change the multithreading
 pub fn iterate_test(graph: &NGfa, threads: usize) -> Vec<((String, String),  (HashMap<(usize, usize), Vec<(usize, usize)>>, Option<(usize, usize)>))>{
-    // Get pairs and
+
+
+    // Get all pairs of paths - (n*n-1)/2
     let pairs = get_all_pairs(&graph.paths);
     info!("Number of pairs: {}", pairs.len());
+    // Chunk the pairs
     let chunks = chunk_inplace(pairs, threads);
 
-    // Resultat
+    // Results
     let result = Vec::new();
-    let mut handles = Vec::new();
     let result_arc = Arc::new(Mutex::new(result));
+
+    // Handles
+    let mut handles = Vec::new();
 
     // Iterate over chunks
     for chunk in chunks{
@@ -42,8 +55,9 @@ pub fn iterate_test(graph: &NGfa, threads: usize) -> Vec<((String, String),  (Ha
             for pair in chunk.iter(){
                 debug!("Pair: {} {}", pair.0.name, pair.1.name);
 
-                let mut h = get_shared_index(&pair.0, &pair.1, true);
-                let result = bifurcation_analysis(&h);
+                // Get the shared index
+                let mut shared_index = get_shared_index(&pair.0, &pair.1, true);
+                let result = bifurcation_analysis(&shared_index);
                 let mut rr = j.lock().unwrap();
                 rr.push(((pair.0.name.clone(), pair.1.name.clone()), result));
 
@@ -52,6 +66,7 @@ pub fn iterate_test(graph: &NGfa, threads: usize) -> Vec<((String, String),  (Ha
         handles.push(handle);
     }
 
+    // Wait for handles
     for handle in handles {
         handle.join().unwrap()
 
@@ -67,19 +82,24 @@ pub fn iterate_test(graph: &NGfa, threads: usize) -> Vec<((String, String),  (Ha
     return result_final
 }
 
-/// Convert Path to hashset of directed nodes
+/// Creates HashSet of DirNode from Path
 pub fn path2hashset_dirnode(path: &NPath) -> HashSet<DirNode>{
     let hs_dirnode: HashSet<DirNode> = HashSet::from_iter(path.nodes.iter().cloned().zip(path.dir.iter().cloned()).map(|x| {DirNode::new(x.1, x.0)}));
-    return hs_dirnode
+    hs_dirnode
 }
 
-/// Convert Path to vector of directed nodes
+/// Creates Vector of DirNode from Path
 pub fn path2vec_dirnode(path: &NPath) -> Vec<DirNode>{
-    let iter1: Vec<DirNode> = Vec::from_iter(path.nodes.iter().cloned().zip(path.dir.iter().cloned()).map(|x| {DirNode::new(x.1, x.0)}));
-    iter1
+    let vec_dirnode: Vec<DirNode> = Vec::from_iter(path.nodes.iter().cloned().zip(path.dir.iter().cloned()).map(|x| {DirNode::new(x.1, x.0)}));
+    vec_dirnode
 }
 
-/// Convert vector to HashMap(node -> [index, index])
+/// **Convert vector to HashMap - {DirNode -> [index]}**
+///
+///
+/// Iterate over the path
+/// Check if node is contained in the "shared" index
+///
 pub fn vec2hashmap(vec: &Vec<DirNode>, intersection: &HashSet<DirNode>) -> HashMap<DirNode, Vec<usize>>{
     let mut node2pos: HashMap<DirNode, Vec<usize>> = HashMap::new();
     for (index, dir_node) in vec.iter().enumerate(){
@@ -96,38 +116,47 @@ pub fn vec2hashmap(vec: &Vec<DirNode>, intersection: &HashSet<DirNode>) -> HashM
 
 
 
-/// Get the shared index of two path
+/// Get all positions [x1, x2] of the same shared nodes
 pub fn get_shared_index(path1: &NPath, path2: &NPath, sort: bool) -> Vec<(usize, usize)> {
+    // Get all directed nodes found in both paths
     let iter1 = path2hashset_dirnode(path1);
     let iter2 = path2hashset_dirnode(path2);
 
-    let g: HashSet<DirNode> = iter1.intersection(&iter2).cloned().collect();
+    let shared_nodes: HashSet<DirNode> = iter1.intersection(&iter2).cloned().collect();
 
 
+    // Makes path if dir_nodes
     let iterr1 = path2vec_dirnode(path1);
     let iterr2 = path2vec_dirnode(path2);
+    // ---- This upper part can be static (or precomputed somehow)
 
-    let node2pos: HashMap<DirNode, Vec<usize>> = vec2hashmap(&iterr1, &g);
-    let node2pos2: HashMap<DirNode, Vec<usize>> = vec2hashmap(&iterr2, &g);
+    // {DirNode -> [index]}
+    let node2pos: HashMap<DirNode, Vec<usize>> = vec2hashmap(&iterr1, &shared_nodes);
+    let node2pos2: HashMap<DirNode, Vec<usize>> = vec2hashmap(&iterr2, &shared_nodes);
 
-    let mut o = Vec::new();
-    for x in g.iter(){
+    // Iterate over shared nodes
+    // --> Get all index from this node
+    // --> Add all possible combinations to the vector
+    let mut result = Vec::new();
+    for x in shared_nodes.iter(){
         let k = node2pos.get(x).unwrap().clone();
         let k2 = node2pos2.get(x).unwrap().clone();
         if (k.len() > 1) | (k2.len() > 1){
-            o.extend(all_combinations(&k, &k2))
+            result.extend(all_combinations(&k, &k2))
         } else {
-            o.push((k[0], k2[0]));
+            result.push((k[0], k2[0]));
         }
     }
+    // Sort it afterwards
     if sort{
-        sort_tuple_vector(&mut o)
+        sort_tuple_vector(&mut result)
     }
-    o
+    result
 }
 
 
-/// All combinations of two vectors
+/// **Get all combinations of two vectors**
+///
 pub fn all_combinations<T>(a: & Vec<T>, b: & Vec<T>) -> Vec<(T,T)>
     where T: Clone{
     {
