@@ -1,8 +1,6 @@
 # Bifurcation library 
 
-This seems to be unnecessary but whatever. 
-
-Building bubbles from two path. 
+Getting bubbles from two index. This can be combined with gfaR based graphs. 
 
 
 
