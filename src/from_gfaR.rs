@@ -6,6 +6,8 @@ use crate::helper::{chunk_inplace, get_all_pairs};
 use std::thread;
 use log::{debug, info};
 use crate::{bifurcation_analysis, sort_tuple_vector};
+use crossbeam_channel::unbounded;
+
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 
@@ -32,25 +34,22 @@ impl DirNode{
 ///
 /// TODO:
 /// - Change the multithreading
-pub fn iterate_test(graph: &NGfa, threads: usize) -> Vec<((String, String),  (HashMap<(usize, usize), Vec<(usize, usize)>>, Option<(usize, usize)>))>{
-
-
+pub fn iterate_test(graph: &NGfa, threads: usize) -> Vec<((String, String), (HashMap<(usize, usize), Vec<(usize, usize)>>, Option<(usize,usize)>)) >{
+    let (s, r) = unbounded();
     // Get all pairs of paths - (n*n-1)/2
     let pairs = get_all_pairs(&graph.paths);
     info!("Number of pairs: {}", pairs.len());
     // Chunk the pairs
     let chunks = chunk_inplace(pairs, threads);
 
-    // Results
-    let result = Vec::new();
-    let result_arc = Arc::new(Mutex::new(result));
+
 
     // Handles
-    let mut handles = Vec::new();
+    //let mut handles = Vec::new();
 
     // Iterate over chunks
     for chunk in chunks{
-        let j = result_arc.clone();
+        let s = s.clone();
         let handle = thread::spawn(move || {
             for pair in chunk.iter(){
                 debug!("Pair: {} {}", pair.0.name, pair.1.name);
@@ -58,28 +57,20 @@ pub fn iterate_test(graph: &NGfa, threads: usize) -> Vec<((String, String),  (Ha
                 // Get the shared index
                 let mut shared_index = get_shared_index(&pair.0, &pair.1, true);
                 let result = bifurcation_analysis(&shared_index);
-                let mut rr = j.lock().unwrap();
-                rr.push(((pair.0.name.clone(), pair.1.name.clone()), result));
+                s.send(((pair.0.name.clone(), pair.1.name.clone()), result)).unwrap();
+
 
             }
         });
-        handles.push(handle);
     }
 
-    // Wait for handles
-    for handle in handles {
-        handle.join().unwrap()
-
+    let mut res = Vec::new();
+    for x in 0..threads{
+        let data = r.recv().unwrap();
+        res.push(data);
     }
+    res
 
-    let mut result_final = Vec::new();
-    let ro = result_arc.lock().unwrap();
-    for x in ro.iter(){
-        if x.1.1.is_some(){
-            result_final.push(x.clone());
-        }
-    }
-    return result_final
 }
 
 /// Creates HashSet of DirNode from Path

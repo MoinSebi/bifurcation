@@ -9,3 +9,7 @@ edition = "2018"
 gfaR_wrapper = {git = "https://github.com/MoinSebi/gfaR_wrapper"}
 log = "0.4.0"
 env_logger = "0.8.4"
+crossbeam-channel = "0.5.6"
+crossbeam = "0.8"
+chrono = "0.4"
+
