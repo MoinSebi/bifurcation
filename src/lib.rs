@@ -1,7 +1,7 @@
 pub mod from_gfaR;
 pub mod helper;
 extern crate log;
-use std::collections::HashMap;
+use hashbrown::HashMap;
 use log::{debug, info};
 
 
@@ -42,8 +42,8 @@ pub fn bifurcation_analysis(o: & Vec<(usize, usize)>) -> ( HashMap<(usize, usize
                 continue;
                 // If both things are bigger -> add bubble
             } else if (shared_index.0 > open_index.0) & (shared_index.1 > open_index.1){
-                if bubble2.contains_key(open_index){
-                    bubble2.get_mut(open_index).unwrap().push(shared_index.clone())
+                if bubble2.contains_key(*open_index){
+                    bubble2.get_mut(*open_index).unwrap().push(shared_index.clone())
                 } else {
                     bubble2.insert(open_index.clone().clone(), vec![shared_index.clone()]);
                 }

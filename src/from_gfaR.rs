@@ -1,5 +1,5 @@
 use gfaR_wrapper::{NGfa, NPath};
-use std::collections::{HashSet, HashMap};
+use std::collections::{HashSet};
 use std::iter::FromIterator;
 use std::sync::{Arc, Mutex};
 use crate::helper::{chunk_inplace, get_all_pairs};
@@ -7,14 +7,13 @@ use std::thread;
 use log::{debug, info};
 use crate::{bifurcation_analysis, sort_tuple_vector};
 use crossbeam_channel::unbounded;
+use hashbrown::HashMap;
 
-
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
-
-
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
 /// **Directed nodes**
-/// Holds identifier and direction
-/// This is 2 bytes
+/// - Holds identifier and direction
+/// - This is 2 bytes since bools are aligned in one byte
+/// - Maybe change this to Structure of vectors?
 pub struct DirNode{
     pub dir: bool,
     pub id: u32,
@@ -95,8 +94,8 @@ pub fn vec2hashmap(vec: &Vec<DirNode>, intersection: &HashSet<DirNode>) -> HashM
     let mut node2pos: HashMap<DirNode, Vec<usize>> = HashMap::new();
     for (index, dir_node) in vec.iter().enumerate(){
         if intersection.contains(dir_node){
-            if node2pos.contains_key(&dir_node){
-                node2pos.get_mut(&dir_node).unwrap().push(index);
+            if node2pos.contains_key(&*dir_node){
+                node2pos.get_mut(&*dir_node).unwrap().push(index);
             } else {
                 node2pos.insert(dir_node.clone(), vec![index.clone()]);
             }
