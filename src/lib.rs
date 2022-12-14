@@ -1,8 +1,7 @@
-pub mod from_gfaR;
 pub mod helper;
 extern crate log;
 use hashbrown::HashMap;
-use log::{debug, info};
+use log::{debug};
 
 
 /// **Inplace sorting of a vector Vec<(a,b)>**
