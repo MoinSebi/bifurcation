@@ -1,6 +1,5 @@
 pub mod helper;
 extern crate log;
-use hashbrown::HashMap;
 use log::{debug};
 
 
@@ -18,7 +17,7 @@ pub fn bifurcation_analysis(o: & Vec<(usize, usize)>) ->  Vec<(usize, usize)> {
     debug!("Running bifuration analysis");
 
     // Mutating vector of starting point of bubbles
-    let mut open: Vec<&(usize, usize)> = Vec::new();
+    let mut open_index: Vec<&(usize, usize)> = Vec::new();
 
     // Bubbles -> dict (from -> Vec[to])
     let mut bubble = Vec::new();
@@ -27,27 +26,27 @@ pub fn bifurcation_analysis(o: & Vec<(usize, usize)>) ->  Vec<(usize, usize)> {
     // TODO
     // Only close bubble if both is bigger
     for shared_index in o.iter(){
+        // Dummy list what "open" bubble to remove
         let mut remove = Vec::new();
-        // trigger - do not update cycles
+
+        // Trigger if the same entry is already there - we always index to open_index
         let mut trigger = true;
-        for (i, (open_start, open_end)) in open.iter().enumerate(){
+        for (index, (pair1_start, pair2_start)) in open_index.iter().enumerate(){
             // If the next entry is just increasing by 1 in both cases --> remove and update new entry
-            if &(open_start+1, open_end+1) == shared_index {
-                remove.push(i);
+            if &(pair1_start +1, pair2_start +1) == shared_index {
+                remove.push(index);
 
 
                 // If one index is same - nothing happens
-            } else if (*open_start == shared_index.1) | (*open_end == shared_index.0){
+            } else if (pair1_start == &shared_index.1) | (pair2_start == &shared_index.0){
                 trigger = false;
                 continue;
 
                 // If both things are bigger -> add bubble
-            } else if (shared_index.0 > *open_start) & (shared_index.1 > *open_end){
-                bubble.push((*open_start, shared_index.0));
-                bubble.push((*open_end, shared_index.1));
-                remove.push(i);
-
-
+            } else if (&shared_index.0 > pair1_start) & (&shared_index.1 > pair2_start){
+                bubble.push((*pair1_start, shared_index.0));
+                bubble.push((*pair2_start, shared_index.1));
+                remove.push(index);
             }
 
 
@@ -55,11 +54,11 @@ pub fn bifurcation_analysis(o: & Vec<(usize, usize)>) ->  Vec<(usize, usize)> {
 
         // Remove all open bubbles
         for (index, x) in remove.iter().enumerate(){
-            open.remove(x-index);
+            open_index.remove(x-index);
         }
         // This is only relevant for the first entry
         if trigger{
-           open.push(&shared_index);
+           open_index.push(&shared_index);
         }
 
     }
