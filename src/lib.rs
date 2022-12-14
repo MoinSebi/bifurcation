@@ -14,10 +14,9 @@ pub fn sort_tuple_vector(vector: & mut Vec<(usize, usize)>){
 /// Detect bubbles
 /// Returns a list of tuples which span a bubble
 /// These numbers are index from the second genome
-pub fn bifurcation_analysis(o: & Vec<(usize, usize)>) -> ( HashMap<(usize, usize), Vec<(usize, usize)>>, Option<(usize, usize)>) {
+pub fn bifurcation_analysis(o: & Vec<(usize, usize)>) ->  Vec<(usize, usize)> {
     debug!("Running bifuration analysis");
 
-    let mut bubble2: HashMap<(usize, usize), Vec<(usize, usize)>> = HashMap::new();
     // Mutating vector of starting point of bubbles
     let mut open: Vec<&(usize, usize)> = Vec::new();
 
@@ -31,22 +30,21 @@ pub fn bifurcation_analysis(o: & Vec<(usize, usize)>) -> ( HashMap<(usize, usize
         let mut remove = Vec::new();
         // trigger - do not update cycles
         let mut trigger = true;
-        for (i, open_index) in open.iter().enumerate(){
+        for (i, (open_start, open_end)) in open.iter().enumerate(){
             // If the next entry is just increasing by 1 in both cases --> remove and update new entry
-            if &(open_index.0+1, open_index.1+1) == shared_index {
+            if &(open_start+1, open_end+1) == shared_index {
                 remove.push(i);
-                // If one index is same
-            } else if (open_index.1 == shared_index.1) | (open_index.0 == shared_index.0){
+
+
+                // If one index is same - nothing happens
+            } else if (*open_start == shared_index.1) | (*open_end == shared_index.0){
                 trigger = false;
                 continue;
+
                 // If both things are bigger -> add bubble
-            } else if (shared_index.0 > open_index.0) & (shared_index.1 > open_index.1){
-                if bubble2.contains_key(*open_index){
-                    bubble2.get_mut(*open_index).unwrap().push(shared_index.clone())
-                } else {
-                    bubble2.insert(open_index.clone().clone(), vec![shared_index.clone()]);
-                }
-                bubble.push([open_index.0, open_index.1, shared_index.0, shared_index.1]);
+            } else if (shared_index.0 > *open_start) & (shared_index.1 > *open_end){
+                bubble.push((*open_start, shared_index.0));
+                bubble.push((*open_end, shared_index.1));
                 remove.push(i);
 
 
@@ -65,11 +63,10 @@ pub fn bifurcation_analysis(o: & Vec<(usize, usize)>) -> ( HashMap<(usize, usize
         }
 
     }
-    let mm = bubble2.keys().into_iter().min().cloned();
 
 
 
-    (bubble2, mm)
+    bubble
 }
 
 
