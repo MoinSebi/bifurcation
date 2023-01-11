@@ -1,5 +1,10 @@
 pub mod helper;
 extern crate log;
+
+use core::fmt::Debug;
+use std::cmp::{max, min};
+use std::ops::{Index, RangeBounds, Rem};
+use std::slice::SliceIndex;
 use log::{debug};
 
 
@@ -11,14 +16,20 @@ pub fn sort_tuple_vector(vector: & mut Vec<[usize; 2]>){
     vector.sort_by(|a, b| (a[0].cmp(&b[0]).then(a[1].cmp(&b[1]))));
 }
 
+pub fn bifuraction_analysis_index<T>(o: & Vec<T>) ->  Vec<Vec<[usize; 2]>>
+    where T: IntoIterator<Item = usize> + Index<usize, Output = T::Item> + std::fmt::Debug + ,<T as IntoIterator>::Item: Debug{
+    bifurcation_analysis(o)
+}
+
 /// Detect bubbles
 /// Returns a list of tuples which span a bubble
 /// These numbers are index from the second genome
-pub fn bifurcation_analysis(o: & Vec<[usize; 2]>) ->  Vec<Vec<[usize; 2]>> {
+pub fn bifurcation_analysis<T>(o: & Vec<T>) ->  Vec<Vec<[usize; 2]>>
+    where T: IntoIterator<Item = usize> + Index<usize, Output = T::Item> + std::fmt::Debug + ,<T as IntoIterator>::Item: Debug {
     debug!("Running bifuration analysis");
 
     // Mutating vector of starting point of bubbles
-    let mut open_index: Vec<&[usize; 2]> = Vec::new();
+    let mut open_index: Vec<&T> = Vec::new();
 
     // Bubbles -> dict (from -> Vec[to])
     let mut bubble = vec![vec![]; 2];
@@ -27,14 +38,16 @@ pub fn bifurcation_analysis(o: & Vec<[usize; 2]>) ->  Vec<Vec<[usize; 2]>> {
     // TODO
     // Only close bubble if both is bigger
     for shared_index in o.iter(){
+        let g = [shared_index[0], shared_index[1]];
         // Dummy list what "open" bubble to remove
         let mut remove = Vec::new();
 
         // Trigger if the same entry is already there - we always index to open_index
         let mut trigger = true;
         for (index, start) in open_index.iter().enumerate(){
+
             // If the next entry is just increasing by 1 in both cases --> remove and update new entry
-            if &[start[0] +1, start[1] +1] == shared_index {
+            if [start[0] as usize +1, start[1] as usize+1] == g {
                 remove.push(index);
 
 
@@ -59,7 +72,65 @@ pub fn bifurcation_analysis(o: & Vec<[usize; 2]>) ->  Vec<Vec<[usize; 2]>> {
         }
         // This is only relevant for the first entry
         if trigger{
-           open_index.push(&shared_index);
+           open_index.push(shared_index);
+        }
+
+    }
+    bubble
+}
+
+
+/// Detect bubbles
+/// Returns a list of tuples which span a bubble
+/// These numbers are index from the second genome
+pub fn bifurcation_analysis_meta(o: & Vec<[usize; 3]>) ->  Vec<(usize, usize)>
+{
+
+    debug!("Running bifuration analysis");
+
+    // Mutating vector of starting point of bubbles
+    let mut open_index: Vec<&[usize; 3]> = Vec::new();
+
+    // Bubbles -> dict (from -> Vec[to])
+    let mut bubble = vec![];
+
+
+    // TODO
+    // Only close bubble if both is bigger
+    for shared_index in o.iter(){
+        // Dummy list what "open" bubble to remove
+        let mut remove = Vec::new();
+
+        // Trigger if the same entry is already there - we always index to open_index
+        let mut trigger = true;
+        for (index, start) in open_index.iter().enumerate(){
+            // If the next entry is just increasing by 1 in both cases --> remove and update new entry
+            if [start[0] +1, start[1] +1] == [shared_index[0], shared_index[1]] {
+                remove.push(index);
+
+
+                // If one index is same - nothing happens
+            } else if (start[0] == shared_index[0]) | (start[1] == shared_index[1]){
+                trigger = false;
+                continue;
+
+                // If both things are bigger -> add bubble
+            } else if (&shared_index[0] > &start[0]) & (&shared_index[1] > &start[1]){
+
+                bubble.push((min(shared_index[2], start[2]), max(shared_index[2], start[2])));
+                remove.push(index);
+            }
+
+
+        }
+
+        // Remove all open bubbles
+        for (index, x) in remove.iter().enumerate(){
+            open_index.remove(x-index);
+        }
+        // This is only relevant for the first entry
+        if trigger{
+            open_index.push(shared_index);
         }
 
     }
@@ -72,7 +143,7 @@ pub fn bifurcation_analysis(o: & Vec<[usize; 2]>) ->  Vec<Vec<[usize; 2]>> {
 #[cfg(test)]
 mod tests {
     use log::info;
-    use crate::{sort_tuple_vector, bifurcation_analysis};
+    use crate::{sort_tuple_vector, bifurcation_analysis, bifurcation_analysis_meta};
     fn init() {
         let _ = env_logger::builder().is_test(true).try_init();
     }
@@ -122,6 +193,14 @@ mod tests {
         let g = bifurcation_analysis(&vec);
         eprintln!("{:?}", g);
 
+    }
+
+    #[test]
+    fn run_meta(){
+        let mut vec = vec![[1, 2,3], [4, 5,4], [3, 4,5], [3, 3,6]];
+        vec.sort_by(|a, b| (a[0].cmp(&b[0]).then(a[1].cmp(&b[1]))));
+        let g = bifurcation_analysis_meta(&vec);
+        eprintln!("okay {:?}", g);
     }
 
 
