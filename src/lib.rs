@@ -24,6 +24,16 @@ pub fn bifuraction_analysis_index<T>(o: & Vec<T>) ->  Vec<Vec<[usize; 2]>>
 /// Detect bubbles
 /// Returns a list of tuples which span a bubble
 /// These numbers are index from the second genome
+///
+/// T can be any iterator - mainly this way so it can be used by array and vector at the same time
+///
+/// Returns the stretching indices
+///
+///
+/// Example:
+/// let mut vec = vec![[1, 2], [4, 5], [3, 4], [3, 3]];
+/// sort_tuple_vector(&mut vec);
+/// let f = bifurcation_analysis(&vec);
 pub fn bifurcation_analysis<T>(o: & Vec<T>) ->  Vec<Vec<[usize; 2]>>
     where T: IntoIterator<Item = usize> + Index<usize, Output = T::Item> + std::fmt::Debug + ,<T as IntoIterator>::Item: Debug {
     debug!("Running bifuration analysis");
@@ -80,9 +90,16 @@ pub fn bifurcation_analysis<T>(o: & Vec<T>) ->  Vec<Vec<[usize; 2]>>
 }
 
 
-/// Detect bubbles
-/// Returns a list of tuples which span a bubble
-/// These numbers are index from the second genome
+/// Detect bubbles but only return the start and end node id
+///
+/// Return vector of (node1, node2) that span a bubble
+///
+///
+/// Example:
+///  let mut vec = vec![[1, 2,3], [4, 5,4], [3, 4,5], [3, 3,6]];
+///  vec.sort_by(|a, b| (a[0].cmp(&b[0]).then(a[1].cmp(&b[1]))));
+///  let g = bifurcation_analysis_meta(&vec);
+///
 pub fn bifurcation_analysis_meta(o: & Vec<[usize; 3]>) ->  Vec<(usize, usize)>
 {
 
