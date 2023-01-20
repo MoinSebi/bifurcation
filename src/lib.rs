@@ -3,7 +3,8 @@ extern crate log;
 
 use core::fmt::Debug;
 use std::cmp::{max, min};
-use std::ops::{Index, RangeBounds, Rem};
+use std::ops::{Add, Index, RangeBounds, Rem};
+use std::os::unix::io::AsFd;
 use std::slice::SliceIndex;
 use log::{debug};
 
@@ -100,13 +101,12 @@ pub fn bifurcation_analysis<T>(o: & Vec<T>) ->  Vec<Vec<[usize; 2]>>
 ///  vec.sort_by(|a, b| (a[0].cmp(&b[0]).then(a[1].cmp(&b[1]))));
 ///  let g = bifurcation_analysis_meta(&vec);
 ///
-pub fn bifurcation_analysis_meta(o: & Vec<[usize; 3]>) ->  Vec<(usize, usize)>
-{
+pub fn bifurcation_analysis_meta(o: & Vec<[u32; 3]>) ->  Vec<(u32, u32)> {
 
     debug!("Running bifuration analysis");
 
     // Mutating vector of starting point of bubbles
-    let mut open_index: Vec<&[usize; 3]> = Vec::new();
+    let mut open_index: Vec<&[u32; 3]> = Vec::new();
 
     // Bubbles -> dict (from -> Vec[to])
     let mut bubble = vec![];
@@ -122,7 +122,7 @@ pub fn bifurcation_analysis_meta(o: & Vec<[usize; 3]>) ->  Vec<(usize, usize)>
         let mut trigger = true;
         for (index, start) in open_index.iter().enumerate(){
             // If the next entry is just increasing by 1 in both cases --> remove and update new entry
-            if [start[0] +1, start[1] +1] == [shared_index[0], shared_index[1]] {
+            if [start[0] + 1 , start[1] + 1 ] == [shared_index[0], shared_index[1]] {
                 remove.push(index);
 
 
