@@ -101,7 +101,7 @@ pub fn bifurcation_analysis<T>(o: & Vec<T>) ->  Vec<Vec<[usize; 2]>>
 ///  vec.sort_by(|a, b| (a[0].cmp(&b[0]).then(a[1].cmp(&b[1]))));
 ///  let g = bifurcation_analysis_meta(&vec);
 ///
-pub fn bifurcation_analysis_meta(o: & Vec<[u32; 3]>) ->  Vec<(u32, u32)> {
+pub fn bifurcation_analysis_meta(shared_index: & Vec<[u32; 3]>) ->  Vec<(u32, u32)> {
 
     debug!("Running bifuration analysis");
 
@@ -109,33 +109,33 @@ pub fn bifurcation_analysis_meta(o: & Vec<[u32; 3]>) ->  Vec<(u32, u32)> {
     let mut open_index: Vec<&[u32; 3]> = Vec::new();
 
     // Bubbles -> dict (from -> Vec[to])
-    let mut bubble = vec![];
+    let mut bubble = Vec::with_capacity(shared_index.len());
 
 
-    // TODO
+
     // Only close bubble if both is bigger
-    for shared_index in o.iter(){
+    for index_tuple in shared_index.iter(){
         // Dummy list what "open" bubble to remove
-        let mut remove = Vec::new();
+        let mut remove = Vec::with_capacity(2);
 
         // Trigger if the same entry is already there - we always index to open_index
         let mut trigger = true;
         for (index, start) in open_index.iter().enumerate(){
+
+            // If both things are bigger -> add bubble
+            if (&index_tuple[0] > &start[0]) & (&index_tuple[1] > &start[1]){
+
+                bubble.push((min(index_tuple[2], start[2]), max(index_tuple[2], start[2])));
+                remove.push(index);}
+
             // If the next entry is just increasing by 1 in both cases --> remove and update new entry
-            if [start[0] + 1 , start[1] + 1 ] == [shared_index[0], shared_index[1]] {
+            else if  [start[0] + 1 , start[1] + 1 ] == [index_tuple[0], index_tuple[1]] {
                 remove.push(index);
-
-
                 // If one index is same - nothing happens
-            } else if (start[0] == shared_index[0]) | (start[1] == shared_index[1]){
+
+            } else if (start[0] == index_tuple[0]) | (start[1] == index_tuple[1]) {
                 trigger = false;
                 continue;
-
-                // If both things are bigger -> add bubble
-            } else if (&shared_index[0] > &start[0]) & (&shared_index[1] > &start[1]){
-
-                bubble.push((min(shared_index[2], start[2]), max(shared_index[2], start[2])));
-                remove.push(index);
             }
 
 
@@ -147,7 +147,7 @@ pub fn bifurcation_analysis_meta(o: & Vec<[u32; 3]>) ->  Vec<(u32, u32)> {
         }
         // This is only relevant for the first entry
         if trigger{
-            open_index.push(shared_index);
+            open_index.push(index_tuple);
         }
 
     }
