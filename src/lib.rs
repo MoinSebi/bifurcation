@@ -116,35 +116,53 @@ pub fn bifurcation_analysis_meta(shared_index: & Vec<[u32; 3]>) ->  Vec<(u32, u3
     // Only close bubble if both is bigger
     for index_tuple in shared_index.iter(){
         // Dummy list what "open" bubble to remove
-        let mut remove = Vec::with_capacity(2);
 
         // Trigger if the same entry is already there - we always index to open_index
         let mut trigger = true;
-        for (index, start) in open_index.iter().enumerate(){
-
-            // If both things are bigger -> add bubble
+        let mut index = 0;
+        while index < open_index.len(){
+            let start = open_index[index];
             if (&index_tuple[0] > &start[0]) & (&index_tuple[1] > &start[1]){
 
                 bubble.push((min(index_tuple[2], start[2]), max(index_tuple[2], start[2])));
-                remove.push(index);}
-
+                open_index.remove(index);}
             // If the next entry is just increasing by 1 in both cases --> remove and update new entry
-            else if  [start[0] + 1 , start[1] + 1 ] == [index_tuple[0], index_tuple[1]] {
-                remove.push(index);
-                // If one index is same - nothing happens
+            else if  (start[0] + 1 == index_tuple[0]) && start[1] + 1 == index_tuple[1] {
+                open_index.remove(index);
 
+
+                // If one index is same - nothing happens
             } else if (start[0] == index_tuple[0]) | (start[1] == index_tuple[1]) {
                 trigger = false;
+                index  += 1;
                 continue;
+            } else {
+                index +=1;
             }
 
-
         }
+        // for (index, start) in open_index.iter().enumerate(){
+        //
+        //     // If both things are bigger -> add bubble
+        //     if (&index_tuple[0] > &start[0]) & (&index_tuple[1] > &start[1]){
+        //
+        //         bubble.push((min(index_tuple[2], start[2]), max(index_tuple[2], start[2])));
+        //         remove.push(index);}
+        //
+        //     // If the next entry is just increasing by 1 in both cases --> remove and update new entry
+        //     else if  (start[0] + 1 == index_tuple[0]) && start[1] + 1 == index_tuple[1] {
+        //         remove.push(index);
+        //
+        //
+        //     // If one index is same - nothing happens
+        //     } else if (start[0] == index_tuple[0]) | (start[1] == index_tuple[1]) {
+        //         trigger = false;
+        //         continue;
+        //     }
+        //
+        //
+        // }
 
-        // Remove all open bubbles
-        for (index, x) in remove.iter().enumerate(){
-            open_index.remove(x-index);
-        }
         // This is only relevant for the first entry
         if trigger{
             open_index.push(index_tuple);
