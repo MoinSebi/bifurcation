@@ -122,17 +122,16 @@ pub fn bifurcation_analysis_meta(shared_index: & Vec<[u32; 3]>) ->  Vec<(u32, u3
         let mut index = 0;
         while index < open_index.len(){
             let start = open_index[index];
-            if (&index_tuple[0] > &start[0]) & (&index_tuple[1] > &start[1]){
+            // If the next entry is just increasing by 1 in both cases --> remove and update new entry
+            if  (start[0] + 1 == index_tuple[0]) && start[1] + 1 == index_tuple[1] {
+                open_index.remove(index);
+
+                // If one index is same - nothing happens
+            } else if (&index_tuple[0] > &start[0]) & (&index_tuple[1] > &start[1]){
 
                 bubble.push((min(index_tuple[2], start[2]), max(index_tuple[2], start[2])));
                 open_index.remove(index);}
-            // If the next entry is just increasing by 1 in both cases --> remove and update new entry
-            else if  (start[0] + 1 == index_tuple[0]) && start[1] + 1 == index_tuple[1] {
-                open_index.remove(index);
-
-
-                // If one index is same - nothing happens
-            } else if (start[0] == index_tuple[0]) | (start[1] == index_tuple[1]) {
+            else if (start[0] == index_tuple[0]) | (start[1] == index_tuple[1]) {
                 trigger = false;
                 index  += 1;
                 continue;
@@ -141,28 +140,6 @@ pub fn bifurcation_analysis_meta(shared_index: & Vec<[u32; 3]>) ->  Vec<(u32, u3
             }
 
         }
-        // for (index, start) in open_index.iter().enumerate(){
-        //
-        //     // If both things are bigger -> add bubble
-        //     if (&index_tuple[0] > &start[0]) & (&index_tuple[1] > &start[1]){
-        //
-        //         bubble.push((min(index_tuple[2], start[2]), max(index_tuple[2], start[2])));
-        //         remove.push(index);}
-        //
-        //     // If the next entry is just increasing by 1 in both cases --> remove and update new entry
-        //     else if  (start[0] + 1 == index_tuple[0]) && start[1] + 1 == index_tuple[1] {
-        //         remove.push(index);
-        //
-        //
-        //     // If one index is same - nothing happens
-        //     } else if (start[0] == index_tuple[0]) | (start[1] == index_tuple[1]) {
-        //         trigger = false;
-        //         continue;
-        //     }
-        //
-        //
-        // }
-
         // This is only relevant for the first entry
         if trigger{
             open_index.push(index_tuple);
@@ -235,6 +212,7 @@ mod tests {
         let mut vec = vec![[1, 2,3], [4, 5,4], [3, 4,5], [3, 3,6]];
         vec.sort_by(|a, b| (a[0].cmp(&b[0]).then(a[1].cmp(&b[1]))));
         let g = bifurcation_analysis_meta(&vec);
+        assert_eq!(vec![(3,6), (4,6)], g);
         eprintln!("okay {:?}", g);
     }
 

@@ -3,10 +3,15 @@ use bifurcation::bifurcation_analysis_meta;
 
 pub fn make_index() -> Vec<[u32; 3]> {
     let mut mm = Vec::new();
-    mm.push([1,100000,2]);
-    for x in 0..1000{
-        for y in (0..1000).rev(){
-            mm.push([x,y,x])
+    mm.push([1,1000000,2]);
+    for x in 0..1000000{
+        if x%2 == 0{
+            mm.push([x,x+5,10])
+        } else if x%5 == 0{
+            mm.push([x, x-1,10])
+        } else {
+            mm.push([x, x+2,10])
+
         }
     }
     mm.sort();
