@@ -22,8 +22,8 @@ pub fn data_creation() -> Vec<[u32; 3]> {
 
 
 /// This bench runs the bifurcation_analysis_meta function from lib
-pub fn bench_bifurcation_analysis_meta(input: &Vec<[u32; 3]>){
-    bifurcation_analysis_meta(&input);
+pub fn bench_bifurcation_analysis_meta(input: &[[u32; 3]]){
+    bifurcation_analysis_meta(input);
 }
 
 
@@ -32,7 +32,7 @@ pub fn bench_bifurcation_analysis_meta(input: &Vec<[u32; 3]>){
 fn criterion_benchmark(c: &mut Criterion) {
     let data = data_creation();
     println!("The data is of length {}", data.len());
-    c.bench_function("faster network4", |b| b.iter(|| bench_bifurcation_analysis_meta(&data)));
+    c.bench_function("faster network4", |b| b.iter(|| bench_bifurcation_analysis_meta(&data[..])));
 
 
 }

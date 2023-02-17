@@ -44,7 +44,7 @@ pub fn is_sorted(vector: & Vec<[u32; 3]>) -> bool{
 ///  vec.sort_by(|a, b| (a[0].cmp(&b[0]).then(a[1].cmp(&b[1]))));
 ///  let g = bifurcation_analysis_meta(&vec);
 ///
-pub fn bifurcation_analysis_meta(shared_index: & Vec<[u32; 3]>) ->  Vec<(u32, u32)> {
+pub fn bifurcation_analysis_meta(shared_index: &[[u32; 3]]) ->  Vec<(u32, u32)> {
 
     debug!("Running bifuration analysis");
 
@@ -130,7 +130,7 @@ mod tests {
     fn test_simple(){
         let mut vec = vec![[1, 2,3], [4, 5,4], [3, 4,5], [3, 3,6]];
         vec.sort_by(|a, b| (a[0].cmp(&b[0]).then(a[1].cmp(&b[1]))));
-        let g = bifurcation_analysis_meta(&vec);
+        let g = bifurcation_analysis_meta(&vec[..]);
         assert_eq!(vec![(3,6), (4,6)], g);
     }
 
