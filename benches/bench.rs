@@ -1,16 +1,19 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use bifurcation::bifurcation_analysis_meta;
 
-
+/// Ach du heilige SCHEISSE
 /// Creates data which should reflect real graph data
 pub fn data_creation() -> Vec<[u32; 3]> {
     let mut mm = Vec::new();
-    mm.push([1,1000000,2]);
-    for x in 0..1000000{
+    // for x in 0..100{
+    //     mm.push([x, 1000000-x, 1]);
+    // }
+
+    for x in 100..6000000{
         if x%20 == 0{
             mm.push([x,x+500,10])
         } else if x%5 == 0{
-            mm.push([x+3, x+40000,10])
+            mm.push([x+3, x+10000,10])
         } else {
             mm.push([x+1, x+1,10])
 
@@ -21,9 +24,11 @@ pub fn data_creation() -> Vec<[u32; 3]> {
 }
 
 
+
 /// This bench runs the bifurcation_analysis_meta function from lib
 pub fn bench_bifurcation_analysis_meta(input: &[[u32; 3]]){
-    bifurcation_analysis_meta(input);
+    let dd = bifurcation_analysis_meta(input);
+    //println!("{}", dd.len());
 }
 
 

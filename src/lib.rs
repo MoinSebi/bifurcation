@@ -64,33 +64,36 @@ pub fn bifurcation_analysis_meta(shared_index: &[[u32; 3]]) ->  Vec<(u32, u32)> 
         let mut trigger = true;
 
         // Index to delete entries on the fly
-        let mut index = 0;
-        while index < open_index.len(){
-            let start = open_index[index];
-            // If the next entry is just increasing by 1 in both cases --> remove and update new entry
-            if  (start[0] + 1 == index_tuple[0]) && start[1] + 1 == index_tuple[1] {
-                open_index.remove(index);
+        if open_index.len() != 0 {
+            let mut index = open_index.len() - 1;
 
-                // If one index is same - nothing happens
-            } else if (&index_tuple[0] > &start[0]) & (&index_tuple[1] > &start[1]){
 
-                bubble.push((min(index_tuple[2], start[2]), max(index_tuple[2], start[2])));
-                open_index.remove(index);}
+            while open_index[index][1] <= index_tuple[1] {
+                let start = open_index[index];
+                // If the next entry is just increasing by 1 in both cases --> remove and update new entry
+                if (start[0] + 1 == index_tuple[0]) && (start[1] + 1 == index_tuple[1]) {
+                    open_index.remove(index);
 
-                // If one index is same - nothing happens (don't add to new open bubbles?)
-            else if (start[0] == index_tuple[0]) | (start[1] == index_tuple[1]) {
-                trigger = false;
-                index  += 1;
-                // This happens when the second entry is smaller for example
-            } else {
-                index +=1;
+                    // If both are bigger -> Create a bubble and remove old ones.
+                } else if (&index_tuple[0] > &start[0]) && (&index_tuple[1] > &start[1]) {
+                    bubble.push((min(index_tuple[2], start[2]), max(index_tuple[2], start[2])));
+                    open_index.remove(index);
+                }
+                if index == 0 {
+                    break
+                } else {
+                    index -= 1;
+                }
             }
-
         }
         // This is only relevant for the first entry
-        if trigger{
-            open_index.push(index_tuple);
-        }
+          //println!("kk\n");
+        open_index.push(index_tuple);
+        //open_index.insert(0, index_tuple);
+
+
+        open_index.sort_by(|a, b| b[1].partial_cmp(&a[1]).unwrap());
+        //println!("{:?}", open_index);
 
     }
     bubble
@@ -103,7 +106,25 @@ pub fn bifurcation_analysis_meta(shared_index: &[[u32; 3]]) ->  Vec<(u32, u32)> 
 mod tests {
     use log::info;
     use crate::{sort_array_vec, bifurcation_analysis_meta, is_sorted};
+    pub fn data_creation() -> Vec<[u32; 3]> {
+        let mut mm = Vec::new();
+        for x in 0..50{
+            mm.push([x, 1000000-x, 1]);
+        }
 
+        for x in 100..6000000{
+            if x%20 == 0{
+                mm.push([x,x+500,10])
+            } else if x%5 == 0{
+                mm.push([x+3, x+10000,10])
+            } else {
+                mm.push([x+1, x+1,10])
+
+            }
+        }
+        mm.sort();
+        mm
+    }
     #[test]
     /// General test the sorting
     fn test_check_sorting(){
@@ -128,7 +149,9 @@ mod tests {
     #[test]
     /// Check a simple example
     fn test_simple(){
-        let mut vec = vec![[1, 2,3], [4, 5,4], [3, 4,5], [3, 3,6]];
+        let mut vec = vec![[1, 2,3], [4, 5,4], [3, 4,5], [3, 3,6], [1,10,19]];
+        //let mut vec = data_creation();
+        println!("{}", vec.len());
         vec.sort_by(|a, b| (a[0].cmp(&b[0]).then(a[1].cmp(&b[1]))));
         let g = bifurcation_analysis_meta(&vec[..]);
         assert_eq!(vec![(3,6), (4,6)], g);
