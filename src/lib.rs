@@ -47,54 +47,62 @@ pub fn is_sorted(vector: & Vec<[u32; 3]>) -> bool{
 pub fn bifurcation_analysis_meta(shared_index: &[[u32; 3]]) ->  Vec<(u32, u32)> {
 
     debug!("Running bifuration analysis");
+    if shared_index.len() < 2{
+        return Vec::new()
+    }
 
     // Mutating vector of starting point of bubbles
-    let mut open_index: Vec<&[u32; 3]> = Vec::new();
+    let mut open_index = Vec::new();
+    open_index = vec![shared_index[0]];
 
     // Bubbles -> dict (from -> Vec[to])
     let mut bubble = Vec::with_capacity(shared_index.len());
 
-
-
     // Only close bubble if both is bigger
-    for index_tuple in shared_index.iter(){
-        // Dummy list what "open" bubble to remove
+    for [istart, iend, ibub] in shared_index.iter().skip(1){
 
-        // Trigger if the same entry is already there - we always index to open_index
-        let mut trigger = true;
+        for [ostart, oend, obub] in open_index.iter(){
 
-        // Index to delete entries on the fly
-        if open_index.len() != 0 {
-            let mut index = open_index.len() - 1;
-
-
-            while open_index[index][1] <= index_tuple[1] {
-                let start = open_index[index];
-                // If the next entry is just increasing by 1 in both cases --> remove and update new entry
-                if (start[0] + 1 == index_tuple[0]) && (start[1] + 1 == index_tuple[1]) {
-                    open_index.remove(index);
-
-                    // If both are bigger -> Create a bubble and remove old ones.
-                } else if (&index_tuple[0] > &start[0]) && (&index_tuple[1] > &start[1]) {
-                    bubble.push((min(index_tuple[2], start[2]), max(index_tuple[2], start[2])));
-                    open_index.remove(index);
-                }
-                if index == 0 {
-                    break
-                } else {
-                    index -= 1;
-                }
+            if ((istart > ostart) && (iend > oend)) && !((ostart + 1 == *istart) && (oend + 1 == *iend)){
+                bubble.push((*min(ibub,  obub), *max(ibub, obub)));
             }
         }
-        // This is only relevant for the first entry
-          //println!("kk\n");
-        open_index.push(index_tuple);
-        //open_index.insert(0, index_tuple);
+
+        // I want those which are bigger than the new one
+        open_index.retain(|&[start, end, bub_id]| istart <= &start || iend<= &end);
 
 
-        open_index.sort_by(|a, b| b[1].partial_cmp(&a[1]).unwrap());
-        //println!("{:?}", open_index);
+        // while (open_index[index][1] <= index_tuple[1]) {
+            //     start = open_index[index];
+            //     // If the next entry is just increasing by 1 in both cases --> remove and update new entry
+            //     if (start[0] + 1 == index_tuple[0]) && (start[1] + 1 == index_tuple[1]) {
+            //         open_index.remove(index);
+            //         //open_index.pop();
+            //
+            //         // If both are bigger -> Create a bubble and remove old ones.
+            //     } else if (index_tuple[0] > start[0]) && (index_tuple[1] > start[1]) {
+            //         bubble.push((min(index_tuple[2], start[2]), max(index_tuple[2], start[2])));
+            //         open_index.remove(index);
+            //         //open_index.pop();
+            //     }
+            //     if index == 0 {
+            //         break
+            //     }
+            //     index -= 1;
+            //
+            // }
 
+        // let insertion_point = match open_index.binary_search_by(|probe| probe[1].cmp(&index_tuple[1]).reverse()) {
+        //     Ok(index) => index, // Value already exists, you can handle this case differently if needed
+        //     Err(index) => index, // Value doesn't exist, insert at this index
+        // };
+        //
+        // // Insert the value at the calculated index
+        // open_index.insert(insertion_point, index_tuple);
+
+        open_index.push([*istart, *iend, *ibub]);
+
+        //open_index.sort_by(|a, b| b[1].partial_cmp(&a[1]).unwrap());
     }
     bubble
 }

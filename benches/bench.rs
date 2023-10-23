@@ -11,7 +11,7 @@ pub fn data_creation() -> Vec<[u32; 3]> {
 
     for x in 100..6000000{
         if x%20 == 0{
-            mm.push([x,x+500,10])
+            mm.push([x,x+500000,10])
         } else if x%5 == 0{
             mm.push([x+3, x+10000,10])
         } else {
