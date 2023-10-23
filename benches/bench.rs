@@ -1,4 +1,4 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{criterion_group, criterion_main, Criterion};
 use bifurcation::bifurcation_analysis_meta;
 
 /// Ach du heilige SCHEISSE
@@ -27,7 +27,7 @@ pub fn data_creation() -> Vec<[u32; 3]> {
 
 /// This bench runs the bifurcation_analysis_meta function from lib
 pub fn bench_bifurcation_analysis_meta(input: &[[u32; 3]]){
-    let dd = bifurcation_analysis_meta(input);
+    let _dd = bifurcation_analysis_meta(input);
     //println!("{}", dd.len());
 }
 
