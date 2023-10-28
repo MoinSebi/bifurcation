@@ -1,6 +1,5 @@
-pub mod helper;
+pub mod test;
 extern crate log;
-
 use std::cmp::{max, min};
 use log::{debug};
 
@@ -67,8 +66,10 @@ pub fn bifurcation_analysis_meta(shared_index: &[[u32; 3]]) ->  Vec<(u32, u32)> 
             }
         }
 
+
         // I want those which are bigger than the new one
-        open_index.retain(|&[start, end, _bub_id]| istart <= &start || iend<= &end);
+        open_index.retain(|&[start, end, _bub_id]| ((istart <= &start) || (iend <= &end)));
+
 
 
 
@@ -79,64 +80,103 @@ pub fn bifurcation_analysis_meta(shared_index: &[[u32; 3]]) ->  Vec<(u32, u32)> 
 }
 
 
+pub fn bifurcation_analysis_sort(shared_index: &[[u32; 3]]) ->  Vec<(u32, u32)> {
+
+    debug!("Running bifuration analysis");
+
+    // Mutating vector of starting point of bubbles
+    let mut open_index = Vec::new();
+    open_index.push(shared_index[0]);
+    // Bubbles -> dict (from -> Vec[to])
+    let mut bubble = Vec::with_capacity(shared_index.len());
 
 
-#[cfg(test)]
-mod tests {
-    use crate::{sort_array_vec, bifurcation_analysis_meta, is_sorted};
 
-    #[allow(dead_code)]
-    pub fn data_creation() -> Vec<[u32; 3]> {
-        let mut mm = Vec::new();
-        for x in 0..50{
-            mm.push([x, 1000000-x, 1]);
-        }
+    // Only close bubble if both is bigger
+    for index_tuple in 1..shared_index.len(){
+        // Dummy list what "open" bubble to remove
 
-        for x in 100..6000000{
-            if x%20 == 0{
-                mm.push([x,x+500,10])
-            } else if x%5 == 0{
-                mm.push([x+3, x+10000,10])
-            } else {
-                mm.push([x+1, x+1,10])
+        let [istart, iend, ibub] = shared_index[index_tuple];
+        // Trigger if the same entry is already there - we always index to open_index
+        // Index to delete entries on the fly
 
+        for x in open_index.iter(){
+            let [ostart, oend, obub] = x;
+            if (istart > *ostart) && (iend > *oend) {
+                if !(ostart + 1 == istart && oend + 1 == iend) {
+                    bubble.push((min(ibub, *obub), max(ibub, *obub)));
+                }
+            }
+            if oend > &iend {
+                break
             }
         }
-        mm.sort();
-        mm
-    }
-    #[test]
-    /// General test the sorting
-    fn test_check_sorting(){
-        let mut vec1 = vec![[1,2,3], [1,3,4], [1,2,4], [2,10,11], [3,20, 13]];
-        let mut vec2 = vec1.clone();
-        vec1.sort();
-        sort_array_vec(&mut vec2);
-        assert_eq!(vec1, vec2);
-        assert_eq!(vec1, vec![[1,2,3], [1,2,4], [1,3,4], [2,10,11], [3,20, 13]])
-    }
 
-    #[test]
-    /// Check "is_sorted" function.
-    fn test_is_sorted(){
-        let mut vec1 = vec![[1,2,3], [1,3,4], [1,2,4], [2,10,11], [3,20, 13]];
-        let vec2 = vec1.clone();
-        vec1.sort();
-        assert_eq!(true, is_sorted(&vec1));
-        assert_eq!(false, is_sorted(&vec2));
-    }
+        open_index.retain(|[start, end, _bubb]| ((istart <= *start) || (iend <= *end)));
+        open_index.push([istart, iend, ibub]);
 
-    #[test]
-    /// Check a simple example
-    fn test_simple(){
-        let mut vec = vec![[1, 2,3], [4, 5,4], [3, 4,5], [3, 3,6], [1,10,19]];
-        //let mut vec = data_creation();
-        println!("{}", vec.len());
-        vec.sort_by(|a, b| (a[0].cmp(&b[0]).then(a[1].cmp(&b[1]))));
-        let g = bifurcation_analysis_meta(&vec[..]);
-        assert_eq!(vec![(3,6), (4,6)], g);
-    }
+        open_index.sort_by(|a, b| a[1].cmp(&b[1]));
+
+        // This is only relevant for the first entry
 
 
+
+
+    }
+    bubble
 }
+
+
+
+
+pub fn bifurcation_analysis_bheap(shared_index: &[[u32; 3]]) ->  Vec<(u32, u32)> {
+
+    debug!("Running bifuration analysis");
+
+    // Mutating vector of starting point of bubbles
+    let mut open_index = Vec::new();
+    open_index.push(shared_index[0]);
+    // Bubbles -> dict (from -> Vec[to])
+    let mut bubble = Vec::with_capacity(shared_index.len());
+
+
+
+    // Only close bubble if both is bigger
+    for index_tuple in 1..shared_index.len(){
+        // Dummy list what "open" bubble to remove
+
+        let [istart, iend, ibub] = shared_index[index_tuple];
+        // Trigger if the same entry is already there - we always index to open_index
+        // Index to delete entries on the fly
+
+        for x in open_index.iter() {
+            let [ostart, oend, obub] = x;
+            if (istart > *ostart) && (iend > *oend) {
+                if !(ostart + 1 == istart && oend + 1 == iend) {
+                    bubble.push((min(ibub, *obub), max(ibub, *obub)));
+                }
+            }
+
+            if oend > &iend {
+                break
+            }
+        }
+
+        open_index.retain(|[start, end, _bubb]| ((istart <= *start) || (iend <= *end)));
+        open_index.push([istart, iend, ibub]);
+
+        if open_index.len() != 0{
+            open_index.sort_by(|a, b| a[1].cmp(&b[1]));
+        }
+
+        // This is only relevant for the first entry
+
+
+
+
+    }
+    bubble
+}
+
+
 
