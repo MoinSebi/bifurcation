@@ -45,7 +45,6 @@ pub fn is_sorted(vector: & Vec<[u32; 3]>) -> bool{
 ///
 pub fn bifurcation_analysis_meta(shared_index: &[[u32; 3]]) ->  Vec<(u32, u32)> {
 
-    debug!("Running bifuration analysis");
     if shared_index.len() < 2{
         return Vec::new()
     }
