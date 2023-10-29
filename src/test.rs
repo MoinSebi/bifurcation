@@ -46,7 +46,8 @@ pub fn load_data(filen: &str) -> Vec<[u32; 3]> {
 /// Running test
 #[cfg(test)]
 mod tests {
-    use crate::{sort_array_vec, bifurcation_analysis_meta, bifurcation_analysis_sort};
+    use std::ops::Sub;
+    use crate::{sort_array_vec, bifurcation_analysis_meta, bifurcation_analysis_sort, bifurcation_analysis_btree, bifurcation_analysis_bheap};
     use crate::test::{data_creation, load_data};
 
 
@@ -113,6 +114,50 @@ mod tests {
         let mut g2 = bifurcation_analysis_sort(&data2[..]);
         g.sort();
         g2.sort();
+        assert_eq!(g2.len(), g.len());
+    }
+
+    #[test]
+    fn test_real_data_btree() {
+//        let mut data2 = load_data("data/test.index.20000.txt");
+        let mut data2 = data_creation(500000, 100, 500);
+
+        //let mut data2 = load_data2("data/data.txt");
+        sort_array_vec(&mut data2);        //let mut vec = data_creation();
+        data2.sort_by(|a, b| (a[0].cmp(&b[0]).then(a[1].cmp(&b[1]))));
+        let mut g = bifurcation_analysis_btree(&data2[..]);
+        let mut g2 = bifurcation_analysis_sort(&data2[..]);
+        g.sort();
+        g2.sort();
+        let g_set = g.iter().collect::<std::collections::HashSet<_>>();
+        let g2_set = g2.iter().collect::<std::collections::HashSet<_>>();
+        let f: Vec<_> = g2_set.difference(&g_set).collect();
+        eprintln!("{:?}", f);
+        assert_eq!(g.len(), g2.len());
+
+        assert_eq!(f.len(),0)
+    }
+
+    #[test]
+    fn test_real_data_bheap() {
+        let mut data2 = load_data("data/test.index.20000.txt");
+        let mut data2 = data_creation(500000, 100, 500);
+
+        //let mut data2 = load_data2("data/data.txt");
+        sort_array_vec(&mut data2);        //let mut vec = data_creation();
+        data2.sort_by(|a, b| (a[0].cmp(&b[0]).then(a[1].cmp(&b[1]))));
+        let mut g = bifurcation_analysis_sort(&data2[..]);
+        let mut g2 = bifurcation_analysis_bheap(&data2[..]);
+        g.sort();
+        g2.sort();
+
+        let g_set = g.iter().collect::<std::collections::HashSet<_>>();
+        let g2_set = g2.iter().collect::<std::collections::HashSet<_>>();
+        let f: Vec<_> = g_set.symmetric_difference(&g2_set).collect();
+        //eprintln!("{:?}", f);
+        assert_eq!(g_set.len(), g2_set.len());
+
+        assert_eq!(f.len(),0);
         assert_eq!(g2.len(), g.len());
     }
 }

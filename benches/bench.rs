@@ -1,5 +1,5 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use bifurcation::{bifurcation_analysis_meta, bifurcation_analysis_sort, sort_array_vec};
+use bifurcation::{bifurcation_analysis_btree, bifurcation_analysis_bheap, bifurcation_analysis_meta, bifurcation_analysis_sort, sort_array_vec};
 use bifurcation::test::{data_creation, load_data};
 
 
@@ -7,7 +7,7 @@ use bifurcation::test::{data_creation, load_data};
 /// Checking two data sets and two approaches.
 fn criterion_benchmark(c: &mut Criterion) {
     // Create the data
-    let mut data = data_creation(500000, 100, 500);
+    let mut data = data_creation(500000, 100, 5000);
     let mut data2 = load_data("data/test.index.20000.txt");
 
     // Sort the data
@@ -22,9 +22,14 @@ fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("Bifurcation new", |b| b.iter(|| bifurcation_analysis_meta(&data[..])));
 
     // Run version
-    c.bench_function("Bifurcation alter", |b| b.iter(|| bifurcation_analysis_sort(&data2[..])));
-    c.bench_function("Bifurcation alter", |b| b.iter(|| bifurcation_analysis_sort(&data[..])));
+    c.bench_function("Bifurcation sort", |b| b.iter(|| bifurcation_analysis_sort(&data2[..])));
+    c.bench_function("Bifurcation sort", |b| b.iter(|| bifurcation_analysis_sort(&data[..])));
 
+    c.bench_function("Bifurcation btree", |b| b.iter(|| bifurcation_analysis_btree(&data2[..])));
+    c.bench_function("Bifurcation btree", |b| b.iter(|| bifurcation_analysis_btree(&data[..])));
+
+    c.bench_function("Bifurcation bheap", |b| b.iter(|| bifurcation_analysis_bheap(&data2[..])));
+    c.bench_function("Bifurcation bheap", |b| b.iter(|| bifurcation_analysis_bheap(&data[..])));
 }
 
 // Run the bench
