@@ -1,0 +1,2 @@
+### Thought on bifurcation
+

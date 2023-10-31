@@ -1,11 +1,13 @@
 # Bifurcation library 
+Bifurcation algorithm: 
+Coming soon...
 
-Getting bubbles from two index. This can be combined with gfaR based graphs. More to come...
+## Use cases 
+Getting bubbles from two index. User case BVD. 
 
 
 
 ### TODO: 
-- More tests
-- GFA2PAF function (inverse of this method
-- Explanation 
-- Test from graph 
+- Tidy up code 
+- Add algorithm documentation 
+- Add thought and benchmark documentation
