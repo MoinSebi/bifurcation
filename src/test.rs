@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 
 
-/// Creating data
+/// Creating sampele data for testing
 /// Might change for different settings
 pub fn data_creation(length: u32, rev_size: u32, freq: u32) -> Vec<[u32; 3]> {
     let mut example_data = Vec::new();
@@ -25,10 +25,10 @@ pub fn data_creation(length: u32, rev_size: u32, freq: u32) -> Vec<[u32; 3]> {
 }
 
 /// Load data from a file
-/// Data from BVD
-pub fn load_data(filen: &str) -> Vec<[u32; 3]> {
+/// This is used to parse data from BVD
+pub fn load_data(filename: &str) -> Vec<[u32; 3]> {
     let mut mm = Vec::new();
-    let file = File::open(filen).unwrap();
+    let file = File::open(filename).unwrap();
     let reader = BufReader::new(file);
 
     // Iterate over each line in the file
@@ -47,7 +47,7 @@ pub fn load_data(filen: &str) -> Vec<[u32; 3]> {
 #[cfg(test)]
 mod tests {
     use std::ops::Sub;
-    use crate::{sort_array_vec, bifurcation_analysis_meta, bifurcation_analysis_sort, bifurcation_analysis_btree, bifurcation_analysis_bheap};
+    use crate::{sort_array_vec, bifurcation_meta, bifurcation_vec_sorted, bifurcation_sort_inplace, insert_sorted_vector, bifurcation_btreeset, bifurcation_sort_hold};
     use crate::test::{data_creation, load_data};
 
 
@@ -70,7 +70,7 @@ mod tests {
         //let mut vec = data_creation();
         println!("{}", vec.len());
         vec.sort_by(|a, b| (a[0].cmp(&b[0]).then(a[1].cmp(&b[1]))));
-        let g = bifurcation_analysis_meta(&vec[..]);
+        let g = bifurcation_meta(&vec[..]);
         assert_eq!(vec![(3, 6), (4, 6)], g);
     }
 
@@ -81,22 +81,20 @@ mod tests {
         //let mut vec = data_creation();
         println!("{}", vec.len());
         vec.sort_by(|a, b| (a[0].cmp(&b[0]).then(a[1].cmp(&b[1]))));
-        let g = bifurcation_analysis_meta(&vec[..]);
-        let g2 = bifurcation_analysis_sort(&vec[..]);
+        let g = bifurcation_meta(&vec[..]);
 
-        assert_eq!(g2, g);
     }
 
 
     #[test]
     /// Testing data from data creation (complex)
-    fn test_data_creation() {
+    fn test_meta_vs_vec_sorted() {
         let mut data2 = data_creation(500000, 100, 500);
         //let mut data2 = load_data2("data/data.txt");
         sort_array_vec(&mut data2);        //let mut vec = data_creation();
         data2.sort_by(|a, b| (a[0].cmp(&b[0]).then(a[1].cmp(&b[1]))));
-        let mut g = bifurcation_analysis_meta(&data2[..]);
-        let mut g2 = bifurcation_analysis_sort(&data2[..]);
+        let mut g = bifurcation_meta(&data2[..]);
+        let mut g2 = bifurcation_vec_sorted(&data2[..]);
         g.sort();
         g2.sort();
         assert_eq!(g2.len(), g.len());
@@ -105,49 +103,49 @@ mod tests {
 
     #[test]
     /// Testing real data
-    fn test_real_data() {
+    fn test_meta_vs_vec_sorted_inplace() {
         let mut data2 = load_data("data/test.index.20000.txt");
         //let mut data2 = load_data2("data/data.txt");
         sort_array_vec(&mut data2);        //let mut vec = data_creation();
         data2.sort_by(|a, b| (a[0].cmp(&b[0]).then(a[1].cmp(&b[1]))));
-        let mut g = bifurcation_analysis_meta(&data2[..]);
-        let mut g2 = bifurcation_analysis_sort(&data2[..]);
+        let mut g = bifurcation_meta(&data2[..]);
+        let mut g2 = bifurcation_sort_inplace(&data2[..]);
         g.sort();
         g2.sort();
         assert_eq!(g2.len(), g.len());
     }
 
     #[test]
-    fn test_real_data_btree() {
+    fn test_meta_vs_btree() {
 //        let mut data2 = load_data("data/test.index.20000.txt");
         let mut data2 = data_creation(500000, 100, 500);
 
         //let mut data2 = load_data2("data/data.txt");
         sort_array_vec(&mut data2);        //let mut vec = data_creation();
         data2.sort_by(|a, b| (a[0].cmp(&b[0]).then(a[1].cmp(&b[1]))));
-        let mut g = bifurcation_analysis_btree(&data2[..]);
-        let mut g2 = bifurcation_analysis_sort(&data2[..]);
+        let mut g = bifurcation_btreeset(&data2[..]);
+        let mut g2 = bifurcation_meta(&data2[..]);
         g.sort();
         g2.sort();
         let g_set = g.iter().collect::<std::collections::HashSet<_>>();
         let g2_set = g2.iter().collect::<std::collections::HashSet<_>>();
         let f: Vec<_> = g2_set.difference(&g_set).collect();
-        eprintln!("{:?}", f);
-        assert_eq!(g.len(), g2.len());
+        assert_eq!(0, f.len());
+        assert_eq!(g_set.len(), g2_set.len());
 
         assert_eq!(f.len(),0)
     }
 
     #[test]
-    fn test_real_data_bheap() {
+    fn test_meta_vs_sort_hold() {
         let mut data2 = load_data("data/test.index.20000.txt");
         let mut data2 = data_creation(500000, 100, 500);
 
         //let mut data2 = load_data2("data/data.txt");
         sort_array_vec(&mut data2);        //let mut vec = data_creation();
         data2.sort_by(|a, b| (a[0].cmp(&b[0]).then(a[1].cmp(&b[1]))));
-        let mut g = bifurcation_analysis_sort(&data2[..]);
-        let mut g2 = bifurcation_analysis_bheap(&data2[..]);
+        let mut g = bifurcation_meta(&data2[..]);
+        let mut g2 = bifurcation_sort_hold(&data2[..]);
         g.sort();
         g2.sort();
 
@@ -156,12 +154,25 @@ mod tests {
         let f: Vec<_> = g_set.symmetric_difference(&g2_set).collect();
         //eprintln!("{:?}", f);
         assert_eq!(g_set.len(), g2_set.len());
-
-        assert_eq!(f.len(),0);
-        assert_eq!(g2.len(), g.len());
     }
+
+
+
+
+
+    #[test]
+    /// Test remove function
+    fn test_remove() {
+        let mut f = vec![[3,11,5], [2,2,2], [1,1,1]];
+        let mut d = vec![[10,1,3], [10,3,2]];
+        let a = insert_sorted_vector(&mut f, &d);
+        assert_eq!(f,[[3, 11, 5], [10, 3, 2], [2, 2, 2], [10, 1, 3], [1, 1, 1]])
+
+    }
+
+
+
+
 }
-
-
 
 

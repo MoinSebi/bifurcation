@@ -16,8 +16,7 @@ hashbrown = "0.13.1"
 splay = "0.1.8"
 rbtree = "0.1.5"
 splay_tree = "0.3.1"
-
-
+simdeez = "1.0.8"
 
 [dev-dependencies]
 assert_cmd = "2.0"
