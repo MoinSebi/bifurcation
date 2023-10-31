@@ -163,7 +163,7 @@ pub fn bifurcation_sort_hold(shared_index: &[[u32; 3]]) ->  Vec<(u32, u32)> {
 
         while index > 0{
 
-            let [ostart, oend, obub] = open_index[index-1];
+            let [ostart, oend, obub]: _ = open_index[index-1];
 
 
             if (istart > ostart) && (iend > oend) {
